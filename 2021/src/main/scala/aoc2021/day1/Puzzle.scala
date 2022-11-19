@@ -14,8 +14,10 @@ object Puzzle extends ZIOAppDefault {
     .flatMap(source => ZStream.fromIterator(source.getLines().map(_.toInt)))
 
   private val program = for {
-    output <- Solution.increasedFromPrevious(puzzleData).runSum
-    _      <- Console.printLine(s"Result of the puzzle: $output")
+    output1 <- Solution.increasedFromPrevious(puzzleData).runSum
+    _      <- Console.printLine(s"Result of the puzzle in part 1: $output1")
+    output2 <- Solution.increasedSumFromPreviousWindow(puzzleData).runSum
+    _      <- Console.printLine(s"Result of the puzzle in part 2: $output2")
   } yield ()
 
   override def run: ZIO[Any, Any, Any] = program

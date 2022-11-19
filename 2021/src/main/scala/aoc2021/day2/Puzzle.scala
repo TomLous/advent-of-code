@@ -16,8 +16,10 @@ object Puzzle extends ZIOAppDefault {
   ))
 
   private val program = for{
-    output1 <- Solution.followDiveInstructions(puzzleData)
+    output1 <- Solution.followSimpleDiveInstructions(puzzleData)
     _       <- Console.printLine(s"Result of the puzzle in part 1: ${output1.mult}")
+    output2 <- Solution.followComplexDiveInstructions(puzzleData)
+    _       <- Console.printLine(s"Result of the puzzle in part 2: ${output2.mult}")
   }yield ()
 
 

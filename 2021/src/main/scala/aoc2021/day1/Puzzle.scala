@@ -9,7 +9,7 @@ object Puzzle extends ZIOAppDefault {
 
   private val puzzleData = ZStream
     .acquireReleaseWith(
-      ZIO.attempt(Source.fromResource("puzzle.txt"))
+      ZIO.attempt(Source.fromResource("day1/puzzle.txt"))
     )(source => ZIO.succeed(source.close()))
     .flatMap(source => ZStream.fromIterator(source.getLines().map(_.toInt)))
 

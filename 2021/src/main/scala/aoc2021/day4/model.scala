@@ -9,7 +9,7 @@ object model {
   case class Board(grid: List[List[Int]], horizontals: List[Int], verticals: List[Int], unmarked: List[Int]) {
     lazy val rowCols: List[(List[Int], Int)] = grid.zipWithIndex
     lazy val colRows: List[(List[Int], Int)] = grid.transpose.zipWithIndex
-    lazy val gridSize                        = grid.size
+    lazy val gridSize: Int                   = grid.size
     override def toString: String            = grid.map(_.map(s"%2d".format(_)).mkString(" ")).mkString("\n")
 
     def update(value: Int): Board = {

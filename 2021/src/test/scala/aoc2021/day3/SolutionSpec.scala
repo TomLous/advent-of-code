@@ -20,7 +20,7 @@ object SolutionSpec extends ZIOSpecDefault {
     "01010"
   ).map(_.toList.map(_.asDigit))
 
-  def spec: Spec[Any, Throwable] = suite("Day2 Solution")(
+  def spec: Spec[Any, Throwable] = suite("Day3 Solution")(
     test("part 1 - example 1") {
       val input          = ZStream.fromIterable(sampleList)
       val expectedOutput = 198L

@@ -15,9 +15,9 @@ object Puzzle extends ZIOAppDefault {
     .flatMap(source => ZStream.fromIterator(source.getLines()))
 
   private val program = for {
-    parsed <- Solution.parseInput(puzzleData)
+    parsed      <- Solution.parseInput(puzzleData)
     resultPart1 <- Solution.solvePart1(parsed.nums, parsed.boards)
-    _       <- Console.printLine(s"Result of the puzzle in part 1: ${resultPart1.solution}")
+    _           <- Console.printLine(s"Result of the puzzle in part 1: ${resultPart1.solution}")
     resultPart2 <- Solution.solvePart2(parsed.nums, parsed.boards)
     _           <- Console.printLine(s"Result of the puzzle in part 2: ${resultPart2.solution}")
   } yield ()

@@ -28,7 +28,7 @@ object SolutionSpec extends ZIOSpecDefault {
      | 2  0 12  3  7""".stripMargin
 
 
-  def spec: Spec[Any, Throwable] = suite("Day2 Solution")(
+  def spec: Spec[Any, Throwable] = suite("Day4 Solution")(
     test("part 1 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
       val expectedOutput = 4512L

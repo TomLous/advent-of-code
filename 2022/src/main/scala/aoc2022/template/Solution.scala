@@ -1,6 +1,6 @@
 package aoc2022.template
 
-import aoc2022.template.model.*
+import model.*
 import zio.*
 import zio.stream.ZStream
 

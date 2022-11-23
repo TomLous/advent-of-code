@@ -8,12 +8,7 @@ import scala.io.Source
 object Puzzle extends ZIOAppDefault {
 
   private val puzzleData = ZStream
-    .acquireReleaseWith(
-//      ZIO.attempt(Source.fromResource(getClass.getPackageName.replaceAll("\\.","/") + "/puzzle-input.txt"))
-//      ZIO.attempt(Source.fromResource("/aoc2022/template/puzzle-input.txt"))
-//      ZIO.attempt(Source.fromResource("aoc2022/template/puzzle-input.txt"))
-      ZIO.attempt(Source.fromURL(getClass.getResource("puzzle-input.txt")))
-    )(source => ZIO.succeed(source.close()))
+    .acquireReleaseWith(ZIO.attempt(Source.fromURL(getClass.getResource("puzzle-input.txt"))))(source => ZIO.succeed(source.close()))
     .flatMap(source => ZStream.fromIterator(source.getLines()))
 
   private val program = for {

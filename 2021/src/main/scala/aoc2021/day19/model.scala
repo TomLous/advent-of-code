@@ -22,22 +22,22 @@ object model {
   case class Space(points: List[Point]):
     lazy val beacons: List[Beacon] = points.collect { case b: Beacon => b }
 
-    def scoreCandidates(scanners: List[Scanner]):List[(Int, Scanner)] = {
-      scanners.map(s)
-    }
+    def scoreCandidates(scanners: List[Scanner]):List[(Int, Scanner)] = ???
+
     def matchScanner(scanner: Scanner): Option[Scanner] = ???
     def addScanner(scanner: Scanner): Space = ???
 
   object Space:
-    def addScanners(scanners: List[Scanner], space: Space): Space = {
-      if scanners.isEmpty then space
-      else
-        val scannerCandidates: List[(Int, Scanner)] = space.scoreCandidates(scanners)
-        val orientedScanner = space.matchScanner(scannerCandidates.head._2)
-        orientedScanner match
-          case None => throw new Exception(s"Can't add scanner ${orientedScanner._2.num} to space")
-          case Some(scanner) => addScanners(scannerCandidates.tail.map(_._2), space.addScanner(scanner))
-    }
+    def addScanners(scanners: List[Scanner], space: Space): Space = ???
+//    {
+//      if scanners.isEmpty then space
+//      else
+//        val scannerCandidates: List[(Int, Scanner)] = space.scoreCandidates(scanners)
+//        val orientedScanner = space.matchScanner(scannerCandidates.head._2)
+//        orientedScanner match
+//          case None => throw new Exception(s"Can't add scanner ${orientedScanner._2.num} to space")
+//          case Some(scanner) => addScanners(scannerCandidates.tail.map(_._2), space.addScanner(scanner))
+//    }
 
 
     def init(scanners: List[Scanner]): Space =

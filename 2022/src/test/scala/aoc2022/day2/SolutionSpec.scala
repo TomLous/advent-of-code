@@ -1,4 +1,4 @@
-package aoc2022.template
+package aoc2022.day2
 
 import aoc2022.template.Solution
 import zio.*
@@ -7,7 +7,7 @@ import zio.test.*
 
 object SolutionSpec extends ZIOSpecDefault {
 
-  val prefix = "AoC 2022 - Day [template]"
+  val prefix = "AoC 2022 - Day 2"
 
   private val sampleData: String =
     """

@@ -1,4 +1,4 @@
-package aoc2022.template
+package aoc2022.day2
 
 import model.*
 import zio.*

@@ -6,7 +6,9 @@ import zio.stream.*
 
 object Solution {
 
-  val stringToScannerPipeline:ZPipeline[Any, Nothing, String, Scanner] = ZPipeline.splitOnChunk(Chunk("")) >>> ZPipeline.mapChunks[String, Scanner](chunk => Chunk(Scanner(chunk.head, chunk.tail.toList)))
+  val stringToScannerPipeline:ZPipeline[Any, Nothing, String, Scanner] = 
+    ZPipeline.splitOnChunk(Chunk("")) >>> 
+      ZPipeline.mapChunks[String, Scanner](chunk => Chunk(Scanner(chunk.head, chunk.tail.toList)))
 
   def parseInput(stringStream:  ZStream[Any, Throwable, String]): ZIO[Any, Throwable, List[Scanner]] =
     (for {
@@ -16,16 +18,23 @@ object Solution {
     } yield list).runCollect.map(_.toList)
 
   def createSpace(input: List[Scanner]): ZIO[Any, Throwable, Space] = {
-    input.foreach(i => println(i.num + " \n" + i.beaconLineSegments.map(ls => (ls.fingerprint, ls)).mkString("\n")))
-    val space = Space(Nil)
-    ZIO.succeed(space)
+    ZIO.succeed(Space.init(input))
   }
 
   def solvePart1(input: Space): ZIO[Any, Throwable, Long] = {
+//    input.beacons.toList.sortBy(_.x).foreach(println)
     ZIO.succeed(input.beacons.size.toLong)
   }
 
   def solvePart2(input: Space): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(0L)
+    ZIO.succeed(
+      input.scanners.toList
+        .combinations(2)
+        .map { case List(l, r) =>
+          l.manhattanDistance(r)
+        }
+        .max
+        .toLong
+    )
 
 }

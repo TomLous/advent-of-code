@@ -9,21 +9,21 @@ import zio.test.Assertion.hasSameElements
 object SolutionSpec extends ZIOSpecDefault {
 
   val examples: Map[String, String] = Map(
-    """--- scanner 0 ---
-      |0,2
-      |4,1
-      |3,3
-      |
-      |--- scanner 1 ---
-      |-1,-1
-      |-5,0
-      |-2,1
-      |""".stripMargin ->
-    """
-        |0,2
-        |4,1
-        |3,3
-        |""".stripMargin,
+//    """--- scanner 0 ---
+//      |0,2
+//      |4,1
+//      |3,3
+//      |
+//      |--- scanner 1 ---
+//      |-1,-1
+//      |-5,0
+//      |-2,1
+//      |""".stripMargin ->
+//    """
+//        |0,2
+//        |4,1
+//        |3,3
+//        |""".stripMargin,
     """--- scanner 0 ---
       |404,-588,-901
       |528,-643,409
@@ -240,22 +240,33 @@ object SolutionSpec extends ZIOSpecDefault {
                                           |1994,-1805,1792""".stripMargin
   )
 
-  def spec: Spec[Any, Throwable] = suite("Day16 Solution")(
+  def spec: Spec[Any, Throwable] = suite("Day19 Solution")(
     test("part 1 - example 1") {
       val inputData = examples.keys.map(input => ZStream.fromIterable(input.split("\n")))
-
+      val expectedOutput = List(79L)
 
       for {
         scannerData <- ZIO.foreach(inputData)(Solution.parseInput)
-        _ <- ZIO.foreach(scannerData)(scanners =>
-          for {
-            _ <- Console.printLine("-----")
-            _ <- ZIO.foreach(scanners)(Console.printLine(_))
-          } yield ()
-        )
+//        _ <- ZIO.foreach(scannerData)(scanners =>
+//          for {
+//            _ <- Console.printLine("-----")
+//            _ <- ZIO.foreach(scanners)(Console.printLine(_))
+//          } yield ()
+//        )
         spaces <- ZIO.foreach(scannerData)(Solution.createSpace)
         solutions <- ZIO.foreach(spaces)(Solution.solvePart1)
-      } yield assertTrue(true)
+      } yield assert(solutions.toList)(hasSameElements(expectedOutput))
+
+    },
+      test("part 1 - example 2") {
+      val inputData      = examples.keys.map(input => ZStream.fromIterable(input.split("\n")))
+      val expectedOutput = List(3621L)
+
+      for {
+        scannerData <- ZIO.foreach(inputData)(Solution.parseInput)
+        spaces    <- ZIO.foreach(scannerData)(Solution.createSpace)
+        solutions <- ZIO.foreach(spaces)(Solution.solvePart2)
+      } yield assert(solutions.toList)(hasSameElements(expectedOutput))
 
     }
   )

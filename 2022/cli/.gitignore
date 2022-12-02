@@ -22,3 +22,6 @@ output
 
 # Scala CLI
 .scala-build
+
+# ENV
+.env

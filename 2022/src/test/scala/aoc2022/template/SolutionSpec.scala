@@ -7,7 +7,7 @@ import zio.test.*
 
 object SolutionSpec extends ZIOSpecDefault {
 
-  val prefix = "AoC 2022 - Day [template]"
+  val prefix = "AoC 2022 - Day [day]"
 
   private val sampleData: String =
     """

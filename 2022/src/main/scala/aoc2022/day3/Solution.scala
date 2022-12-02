@@ -1,6 +1,6 @@
 package aoc2022.day3
 
-import aoc2022.day3.model.*
+import model.*
 import zio.*
 import zio.stream.*
 

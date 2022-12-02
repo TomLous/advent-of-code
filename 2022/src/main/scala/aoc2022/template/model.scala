@@ -1,6 +1,6 @@
 package aoc2022.template
 
-object model{
+object model {
 
-  type Input = Unit // TODO: implement
- }
+  type Input = Unit // TODO
+}

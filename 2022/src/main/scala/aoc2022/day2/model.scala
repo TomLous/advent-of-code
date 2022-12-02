@@ -30,13 +30,16 @@ object model{
     case Rock extends GameAction(1)
     case Paper extends GameAction(2)
     case Scissors extends GameAction(3)
+
   object GameAction:
     private val graph = Graph(
       GameAction.Rock ~> GameAction.Scissors,
       GameAction.Paper ~> GameAction.Rock,
       GameAction.Scissors ~> GameAction.Paper
     )
+
     private def node(action: GameAction):graph.NodeT = graph.get(action)
+
     def outcome(opponent: GameAction, self: GameAction): GameResult = {
       node(self).pathTo(node(opponent))(Visitor.empty) match
         case Some(path) =>
@@ -45,6 +48,7 @@ object model{
           else GameResult.Lose
         case None => throw new Exception("No path found")
     }
+
     def resultFor(opponentAction: GameAction, desiredResult: GameResult): GameAction =
       (desiredResult match
         case GameResult.Win => node(opponentAction).diPredecessors.head

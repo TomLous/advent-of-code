@@ -29,7 +29,7 @@ object SolutionSpec extends ZIOSpecDefault {
     },
     test("part 2 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 0L
+      val expectedOutput = 1134L
 
       for {
         data    <- Solution.parseInput(input)

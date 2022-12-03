@@ -14,9 +14,10 @@ object Puzzle extends ZIOAppDefault {
     case (duration, output) => Console.printLine(logLine + (if appendOutput then output.toString else "") + s" [${duration.toMillis}ms]").as(output)
 
   private val program = for {
-    data      <- Solution.parseInput(puzzleData).timed.flatMap(logging("Parsed data"))
-    _         <- Solution.solvePart1(data).timed.flatMap(logging("Result of the puzzle in part 1: ", appendOutput = true))
-    _         <- Solution.solvePart2(data).timed.flatMap(logging("Result of the puzzle in part 2: ", appendOutput = true))
+    data  <- Solution.parseInput(puzzleData).timed.flatMap(logging("Parsed data"))
+    _     <- Solution.solvePart1(data).timed.flatMap(logging("Result of the puzzle in part 1: ", appendOutput = true))
+    data2 <- Solution.parseInput2(puzzleData).timed.flatMap(logging("Parsed data"))
+    _     <- Solution.solvePart2(data2).timed.flatMap(logging("Result of the puzzle in part 2: ", appendOutput = true))
   } yield ()
 
   override def run: ZIO[Any, Any, Any] = program.timed.flatMap(logging("Completed year 2022 day 3")).exitCode

@@ -3,7 +3,9 @@ import zio.stream.*
 import zio.stream.ZPipeline.*
 import zio.worksheet.*
 
-if i < 97 then i - 38 else i - 96val i = c.toIntdef toNum(c: Char): Int =
+def toNum(c: Char): Int =
+  val i = c.toInt
+  if i < 97 then i - 38 else i - 96
 
 val part1Pipeline = ZPipeline.mapChunks[String, Int](
   _.map(line =>
@@ -12,7 +14,8 @@ val part1Pipeline = ZPipeline.mapChunks[String, Int](
     }
   )
 )
-  val part2Pipeline = ZPipeline.mapChunks[String, Int](c =>
+
+val part2Pipeline = ZPipeline.mapChunks[String, Int](c =>
   Chunk(
     c.map(_.toCharArray.toSet).reduce(_ intersect _).map(toNum).head
   )

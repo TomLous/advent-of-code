@@ -12,58 +12,50 @@ object Solution {
 
 
   val getEdges = ZPipeline.mapChunks[Chunk[(List[Int], Long)], UnDiEdge[Point]](_.flatMap(_.toList match
-    case (previousLine, _) :: (currentLine, y) :: (nextLine, _) :: Nil =>
-      Chunk.fromIterator(
-        (None +: currentLine.zipWithIndex.map(Some(_)) :+ None).sliding(3).flatMap {
-          case previousItem :: currentItem :: nextItem :: Nil => ???
-//          val currentPoint = Point(value, pos.toLong, y)
+    case (currentRow, y) :: (nextRow, yd) :: Nil  =>
+      currentRow.zipWithIndex.sliding(2).toList.flatMap {
+        case (value, x) :: (nextVal, xr) :: Nil =>
+          val currentPoint = Point(value, x, y)
+          val pointR = Point(nextVal, xr, y)
+          val pointD = Point(nextRow(x), x, yd)
+          val pointRD = Point(nextRow(xr), xr, yd)
 
-
-
-//          val up           = previousLine.lift(pos).map(Point(_, pos.toLong, y - 1))
-//          val down         = nextLine.lift(pos).map(Point(_, pos.toLong, y + 1))
-//          val left         = previousItem.map(_._1).map(Point(_, (pos - 1).toLong, y))
-//          val right        = nextItem.map(_._1).map(Point(_, (pos + 1).toLong, y))
-//
-//          List(up, down, left, right).flatten.map(_.createEdge(currentPoint))
+          List(
+            currentPoint ~ pointR,
+            currentPoint ~ pointD,
+            currentPoint ~ pointRD,
+            pointR ~ pointRD,
+            pointD ~ pointRD,
+            pointR ~ pointD
+          )
         }
-      )
-    case other => throw new Exception(s"Unexpected list: $other")
   ))
+
 
   def parseLine(line: String): List[Int] = line.toCharArray.map(_.asDigit).toList
 
-  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, Graph[Point, DiEdge]] =
+  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, Grid] =
     for {
-      edges <- (ZStream.fromChunk(Chunk(List.empty[Int])) ++ lineStream
-        .map(parseLine) ++ ZStream.fromChunk(Chunk(List.empty[Int]))).zipWithIndex
+      edges <- lineStream
+        .map(parseLine)
+        .zipWithIndex
         .rechunk(1)
-        .sliding(3)
+        .sliding(2)
         .via(getEdges)
         .runCollect
-        .map(_.toList)
-      graph <- ZIO.succeed(Graph.from(Nil, edges))
-    } yield ()
-    ???
+        .map(_.toSet)
+      graph <- ZIO.succeed(Grid(edges))
+    } yield graph
 
-  def solvePart1(input: Graph[Point, DiEdge]): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(
-      input.nodes
-        .filter(_.diSuccessors.isEmpty)
-        .toList
-        .map(_.value.value + 1)
-        .sum
-    )
 
-  def solvePart2(input: Graph[Point, DiEdge]): ZIO[Any, Throwable, Long] =
+  def solvePart1(input: Grid): ZIO[Any, Throwable, Long] =
+    val mutGraph = input.iterate(100)
+    ZIO.succeed(mutGraph.flashCounter)
+
+  def solvePart2(input: Grid): ZIO[Any, Throwable, Long] =
+    val mutGraph = input.iterateUntilFlashSync
     ZIO.succeed(
-      (input -- input.nodes.filter(_.value.value == 9))
-        .componentTraverser()
-        .map(_.nodes.size)
-        .toList
-        .sorted
-        .takeRight(3)
-        .product
+      mutGraph.iterationCounter
     )
 
 }

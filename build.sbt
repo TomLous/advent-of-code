@@ -12,6 +12,7 @@ lazy val zio2Libs = Seq(
   "dev.zio"     %% "zio-test"          % "2.0.4" % Test,
   "dev.zio"     %% "zio-test-sbt"      % "2.0.4" % Test,
   "dev.zio"     %% "zio-test-magnolia" % "2.0.4" % Test,
+  "dev.zio"     %% "zio-optics"        % "0.2.0",
   "fr.janalyse" %% "zio-worksheet"     % "2.0.4.0"
 )
 
@@ -26,7 +27,7 @@ lazy val graphLibs = Seq(
 lazy val aoc2021 = (project in file("2021"))
   .settings(
     scalaVersion := "3.2.1",
-    moduleName := "2021",
+    moduleName   := "2021",
     libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs,
     Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
@@ -34,7 +35,7 @@ lazy val aoc2021 = (project in file("2021"))
 lazy val aoc2022 = (project in file("2022"))
   .settings(
     scalaVersion := "3.2.1",
-    moduleName := "2022",
+    moduleName   := "2022",
     libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs,
     Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )

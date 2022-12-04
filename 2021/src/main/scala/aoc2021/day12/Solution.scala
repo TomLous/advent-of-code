@@ -9,7 +9,6 @@ import zio.*
 import zio.stream.*
 
 object Solution {
-
   
   def parseLine(line: String): UnDiEdge[Cave] = line match
     case s"$a-$b" => Cave(a) ~ Cave(b)

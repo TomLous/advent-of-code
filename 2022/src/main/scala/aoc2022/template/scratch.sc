@@ -35,7 +35,6 @@ val puzzle = ZIO.scoped {
           .runSum
           .fork
         s1 <- streams(1)
-          .rechunk(3)
           .via(part2Pipeline)
           .runSum
           .fork

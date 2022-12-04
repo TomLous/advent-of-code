@@ -1,27 +1,30 @@
-package aoc2022.day4
+package aoc2021.day11
 
-import aoc2022.day4.Solution
+import aoc2021.day11.Solution
 import zio.*
 import zio.stream.*
 import zio.test.*
 
 object SolutionSpec extends ZIOSpecDefault {
 
-  val prefix = "AoC 2022 - Day 4"
+  val prefix = "AoC 2021 - Day 11"
 
   private val sampleData: String =
-    """2-4,6-8
-      |2-3,4-5
-      |5-7,7-9
-      |2-8,3-7
-      |6-6,4-6
-      |2-6,4-8
-      |""".stripMargin
+    """5483143223
+      |2745854711
+      |5264556173
+      |6141336146
+      |6357385478
+      |4167524645
+      |2176841721
+      |6882881134
+      |4846848554
+      |5283751526""".stripMargin
 
   def spec: Spec[Any, Throwable] = suite(s"$prefix Solution")(
     test("part 1 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 2L
+      val expectedOutput = 1656L
 
       for {
         data    <- Solution.parseInput(input)
@@ -31,7 +34,7 @@ object SolutionSpec extends ZIOSpecDefault {
     },
     test("part 2 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 4L
+      val expectedOutput = 1134L
 
       for {
         data    <- Solution.parseInput(input)

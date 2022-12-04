@@ -12,9 +12,9 @@ object Solution {
   def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, List[Input]] = lineStream.map(parseLine).runCollect.map(_.toList)
 
   def solvePart1(input: List[Input]): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.count { case (a, b) => (a diff b).isEmpty || (b diff a).isEmpty }.toLong)
+    ZIO.succeed(input.count { case (a, b) => a.subsetOf(b) || b.subsetOf(a) }.toLong)
 
   def solvePart2(input: List[Input]): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.count{ case (a, b) => (a intersect  b).nonEmpty || (b intersect a).nonEmpty }.toLong)
+    ZIO.succeed(input.count{ case (a, b) => (a intersect b).nonEmpty }.toLong)
 
 }

@@ -27,12 +27,12 @@ object Solution {
 
 
   def solvePart1(input: Origami): ZIO[Any, Throwable, Long] =
-    val res = input.followInstructions
-
-    println(res)
+    val res = input.followInstructions(Some(1))
     ZIO.succeed(res.count)
 
   def solvePart2(input: Origami): ZIO[Any, Throwable, Long] =
+    println(input.followInstructions().toString)
+
     ZIO.succeed(0L)
 
 }

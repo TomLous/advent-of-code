@@ -6,17 +6,11 @@ object model {
 
   case class Box(id: Char)
   case class StackRow(cols: Map[Int, Box])
-
   case class MoveInstruction(num: Int, from: Int, to: Int)
 
   case class Game(state: GameState, moves: List[MoveInstruction]):
     def followInstructions: GameState =
       moves.foldLeft(state)((newState, instruction) => newState.move(instruction))
-
-  case class Game2(state: GameState, moves: List[MoveInstruction]):
-    def followInstructions: GameState =
-      moves.foldLeft(state)((newState, instruction) => newState.move(instruction))
-
   case class GameState(stacks: Map[Int, List[Box]]):
     def output: String = stacks.toList.sortBy(_._1).flatMap(_._2.headOption.map(_.id)).mkString
 

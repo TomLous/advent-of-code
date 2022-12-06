@@ -13,14 +13,15 @@ object Solution {
       .map(a => a.last._2 -> a.map(_._1).toSet.size)
       .find(_._2 == size)
       .map(_._1)
-      .runCollect
-      .map(_.head)
+      .runHead
+      .map(_.get) // just die if it's not found
+
 
   def solvePart1(input: ZStream[Any, Throwable, Char]): ZIO[Any, Throwable, Long] =
     for {
       index <- findNonRepeatingIndex(input, 4)
     } yield index + 1
-    
+
   def solvePart2(input: ZStream[Any, Throwable, Char]): ZIO[Any, Throwable, Long] =
     for {
       index <- findNonRepeatingIndex(input, 14)

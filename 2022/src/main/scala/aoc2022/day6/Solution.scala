@@ -10,7 +10,7 @@ object Solution {
     charStream
       .zipWithIndex
       .sliding(size)
-      .map(a => a.last._2 -> a.map(_._1).toSet.size)
+      .map(a => a.last._2 -> a.map(_._1).distinct.size)
       .find(_._2 == size)
       .map(_._1)
       .runHead

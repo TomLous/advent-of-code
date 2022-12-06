@@ -9,7 +9,7 @@ object Puzzle extends ZIOAppDefault {
 
   private val puzzleData = ZStream
     .acquireReleaseWith(ZIO.attempt(Source.fromURL(getClass.getResource("puzzle-input.txt"))))(source => ZIO.succeed(source.close()))
-    .flatMap(source => ZStream.fromIterator(source.getLines().flatMap(_.toCharArray)))
+    .flatMap(source => ZStream.fromIterator(source.iter))
   private def logging[T](logLine:String, appendOutput: Boolean=false)(tuple: (Duration, T)):ZIO[Any, Throwable, T] = tuple match
     case (duration, output) => Console.printLine(logLine + (if appendOutput then output.toString else "") + s" [${duration.toMillis}ms]").as(output)
 

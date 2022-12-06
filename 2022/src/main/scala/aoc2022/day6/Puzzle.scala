@@ -14,7 +14,7 @@ object Puzzle extends ZIOAppDefault {
     case (duration, output) => Console.printLine(logLine + (if appendOutput then output.toString else "") + s" [${duration.toMillis}ms]").as(output)
 
   private val program = for {
-    data      <- Solution.parseInput(puzzleData).timed.flatMap(logging("Parsed data"))
+    data      <- puzzleData.runCollect.map(_.mkString).timed.flatMap(logging("Parsed data"))
     _         <- Solution.solvePart1(data).timed.flatMap(logging("Result of the puzzle in part 1: ", appendOutput = true))
     _         <- Solution.solvePart2(data).timed.flatMap(logging("Result of the puzzle in part 2: ", appendOutput = true))
   } yield ()

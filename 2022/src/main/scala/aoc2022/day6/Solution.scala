@@ -5,21 +5,24 @@ import zio.*
 import zio.stream.*
 
 object Solution {
-  
-  def findNonRepeatingIndex(input: String, size: Int): Option[Int] =
-    input
-      .toCharArray
+
+  def findNonRepeatingIndex(charStream: ZStream[Any, Throwable, Char], size: Int): ZIO[Any, Throwable, Long] =
+    charStream
       .zipWithIndex
       .sliding(size)
       .map(a => a.last._2 -> a.map(_._1).toSet.size)
       .find(_._2 == size)
       .map(_._1)
+      .runCollect
+      .map(_.head)
 
-  def solvePart1(input: String): ZIO[Any, Throwable, Long] =
-    val noRepeat = findNonRepeatingIndex(input, 4)
-    ZIO.succeed(noRepeat.get + 1)
-
-  def solvePart2(input: String): ZIO[Any, Throwable, Long] =
-    val noRepeat = findNonRepeatingIndex(input, 14)
-    ZIO.succeed(noRepeat.get + 1)
+  def solvePart1(input: ZStream[Any, Throwable, Char]): ZIO[Any, Throwable, Long] =
+    for {
+      index <- findNonRepeatingIndex(input, 4)
+    } yield index + 1
+    
+  def solvePart2(input: ZStream[Any, Throwable, Char]): ZIO[Any, Throwable, Long] =
+    for {
+      index <- findNonRepeatingIndex(input, 14)
+    } yield index + 1
 }

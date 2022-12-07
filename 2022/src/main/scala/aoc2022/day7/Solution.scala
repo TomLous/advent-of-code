@@ -30,8 +30,8 @@ object Solution {
     val sizeToDelete = spaceNeeded - sumSizeFree
 
     val potentialDirs = root.filterDirs(_.cumSize >= sizeToDelete)
-    val size = potentialDirs.map(d => d.cumSize).min
+    val dirSize = potentialDirs.map(_.cumSize).min
     
-    ZIO.succeed(size)
+    ZIO.succeed(dirSize)
 
 }

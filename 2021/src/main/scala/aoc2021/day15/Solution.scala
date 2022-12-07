@@ -33,37 +33,27 @@ object Solution {
 
   def expandGrid(grid:List[List[Int]]):List[List[Int]] = {
     val matrix = DenseMatrix(grid: _*)
+    val factor = 5
 
-    val increase = UFunc[Int, Int](_ % 9 + 1)
+    def increaseF(step: Int) = UFunc[Int, Int](i => (i + step - 1) % 9 + 1)
 
-    val matrix2 = increase(matrix)
+    val bigMatrix = DenseMatrix.zeros[Int](matrix.rows * factor, matrix.cols * factor)
 
-    def expand(m: DenseMatrix[Int], cnt: Int): DenseMatrix[Int] =
-      if (cnt == 0) m
-      else
-        val m2 = UFunc[Int, Int](_ % 9 + 1)(m)
-        expand(m2, cnt - 1)
+    val mapping = for{
+      i <- 0 until factor
+      j <- 0 until factor
+      startRow = i * matrix.rows
+      endRow = startRow + matrix.rows
+      startCol = j * matrix.cols
+      endCol = startCol + matrix.cols
+      step = i + j
+    } yield (startRow, endRow, startCol, endCol, step)
 
-    println(matrix2)
+    mapping.foreach { case (startRow, endRow, startCol, endCol, step) =>
+      bigMatrix(startRow until endRow, startCol until endCol) := increaseF(step)(matrix)
+    }
 
-
-
-//    println(matrix)
-//    def expandListOnce(list:List[Int]):List[Int] = list.map(_ + 1).map{case 10 => 1; case x => x}
-//
-//    def expandList(cnt:Int, list:List[Int]):List[Int] = cnt match {
-//      case 1 => list
-//      case _ => list ++ expandList(cnt - 1, expandListOnce(list))
-//    }
-//
-//    val x = grid.map{
-//      row => expandList(5, row)
-//    }
-//
-//    x.foreach(r => println(r.mkString("")))
-
-
-    grid
+    bigMatrix.toArray.toList.grouped(bigMatrix.cols).toList
   }
 
 
@@ -72,9 +62,7 @@ object Solution {
   def parseInput(lineStream: ZStream[Any, Throwable, String], expand: Boolean=false): ZIO[Any, Throwable, CaveSystem] =
     for {
       grid <- lineStream.map(parseLine).runCollect.map(_.toList)
-
       newGrid = if (expand) expandGrid(grid) else grid
-
       edges = newGrid
         .zipWithIndex
         .sliding(2)

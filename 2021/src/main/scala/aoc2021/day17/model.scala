@@ -30,11 +30,10 @@ object model {
 
 
     def checkYSpeeds[T, U](f: (Int, Int, Int, Int) => T, f2: List[T] => U)(xSpeed: Int): List[U] =
-      val maxInitYSpeed = 100 // hack
+      val maxInitYSpeed = math.abs(target.yBottom) // don't know if this is true though
+      (0 to maxInitYSpeed).map(ySpeed => checkHit(xSpeed, ySpeed, f, f2)).toList
       def loop(curInitYSpeed: Int, keepLoop: Boolean = true, solutions: List[U] = Nil): List[U] =
-//        println(s"Check $xSpeed $curInitYSpeed : " + (curInitYSpeed < maxInitYSpeed))
         val (hit, fRes) = checkHit(xSpeed, curInitYSpeed, f, f2)
-//        println(s"hit: $hit | loop: $keepLoop")
         if hit then loop(curInitYSpeed + 1, curInitYSpeed < maxInitYSpeed, solutions :+ fRes)
         else if keepLoop then loop(curInitYSpeed + 1, curInitYSpeed < maxInitYSpeed, solutions)
         else solutions

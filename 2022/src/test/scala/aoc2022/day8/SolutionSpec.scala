@@ -10,13 +10,16 @@ object SolutionSpec extends ZIOSpecDefault {
   val prefix = "AoC 2022 - Day 8"
 
   private val sampleData: String =
-    """
-      |""".stripMargin
+    """30373
+      |25512
+      |65332
+      |33549
+      |35390""".stripMargin
 
   def spec: Spec[Any, Throwable] = suite(s"$prefix Solution")(
     test("part 1 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 0L
+      val expectedOutput = 21L
 
       for {
         data    <- Solution.parseInput(input)
@@ -26,7 +29,7 @@ object SolutionSpec extends ZIOSpecDefault {
     },
     test("part 2 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 0L
+      val expectedOutput = 8L
 
       for {
         data    <- Solution.parseInput(input)

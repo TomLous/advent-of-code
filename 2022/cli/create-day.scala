@@ -36,7 +36,7 @@ object Templater {
         val sessionId = sys.env("SESSION_ID")
 
         if(!os.exists(puzzleInputFile) )
-          val data = Try(requests.get(s"https://adventofcode.com/$year/day/$day/input", cookieValues = Map("session" -> sessionId), verifySslCerts=false, check = true, headers = Map("User-Agent" -> userAgent, "Cache-Control"-> "no-cache")))
+          val data = Try(requests.get(s"https://adventofcode.com/$year/day/$day/input", verifySslCerts=false, check = true, headers = Map("User-Agent" -> userAgent, "Cookie" -> s"session=${sessionId}", "Cache-Control"-> "no-cache")))
 
           data match
             case Success(response) =>

@@ -11,14 +11,11 @@ object model {
 
 
 
+
   trait SnailFishNumber:
-    var level: Int = 0
-    var index: Int = 0
-    def + (that: SnailFishNumber): Pair = Pair(this, that).update
+    def + (that: SnailFishNumber): Pair = Pair(this, that).reduce
 
   case class Pair(a: SnailFishNumber, b: SnailFishNumber) extends SnailFishNumber:
-//    override var level: Int=0
-//    override var index: Int=0
     override def toString: String = s"[$a,$b]"
 
     lazy val reduce: Pair =
@@ -45,9 +42,9 @@ object model {
 //        case _ => throw new Exception("should not happen")
 
     lazy val explode: Pair =
-//      def rec(p: SnailFishNumber, mapping:List[((Int, Int), SnailFishNumber)]): List[((Int, Int), SnailFishNumber)] =
+//      def rec(p: SnailFishNumber, depth:Int=0): SnailFishNumber =
 //        p match
-//          case Pair(a, b, l, i) =>
+//          case Pair(Num(a), Num(b)) =>
 //            val newMapping = mapping :+ ((l, i), p)
 //            rec(a, newMapping) ++ rec(b, newMapping)
 //          case Num(_, l, i) =>
@@ -73,31 +70,24 @@ object model {
         Pair(l, r)
 
   case class Num(n: Int) extends SnailFishNumber:
-//    override var level: Int=0
-//    override var index: Int=0
     override def toString: String = n.toString
 
   object SnailFishNumber:
     def apply(str: String): SnailFishNumber =
-      def rec(chars: List[Char], currentLevel:Int = 0, currentIndex: Int = 0): (SnailFishNumber, List[Char], Int) =
+      def rec(chars: List[Char]): (SnailFishNumber, List[Char]) =
         chars match
-          case Nil => (null, Nil, currentIndex)
+          case Nil => (null, Nil)
           case '[' :: tail =>
-            val left  = rec(tail, currentLevel + 1, currentIndex + 1)
-            val right = rec(left._2, currentLevel + 1, left._3)
-            val pair = Pair(left._1, right._1)
-            pair.level = currentLevel
-            pair.index = currentIndex
-            (pair, right._2 , right._3)
+            val left  = rec(tail)
+            val right = rec(left._2)
+            (Pair(left._1, right._1), right._2)
           case ',' :: tail =>
-            rec(tail, currentLevel, currentIndex + 1)
+            rec(tail)
           case ']' :: tail =>
-            rec(tail, currentLevel , currentIndex + 1)
+            rec(tail)
           case n :: tail =>
             val num = Num(n.asDigit)
-            num.level = currentLevel
-            num.index = currentIndex
-            (num, tail, currentIndex)
+            (Num(n.asDigit), tail)
 
       rec(str.toCharArray.toList).head
 

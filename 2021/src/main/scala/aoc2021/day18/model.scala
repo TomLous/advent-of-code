@@ -9,68 +9,84 @@ import scalax.collection.mutable.DefaultGraphImpl
 
 object model {
 
-
-
-
   trait SnailFishNumber:
-    def + (that: SnailFishNumber): Pair = Pair(this, that).reduce
 
-  case class Pair(a: SnailFishNumber, b: SnailFishNumber) extends SnailFishNumber:
-    override def toString: String = s"[$a,$b]"
-
-    lazy val reduce: Pair =
-      explode
-
-
-    lazy val update: Pair =
-      this
-//      def rec(p: SnailFishNumber, offsetIndex:Int=0): (SnailFishNumber, Int) =
-//        p match
-//          case Pair(a, b, l, i) =>
-//            val newI = offsetIndex + i + 1
-//            val newL = rec(a, offsetIndex)
-//            val newR = rec(b, newL._2)
-//            (Pair(newL._1, newR._1, l + 1, newI), newR._2)
-//          case Num(n, l, i) =>
-//            (Num(n, l +1 , i + offsetIndex + 1), i + offsetIndex + 1)
-//
-//
-//      val newP = rec(this)
-//      println(newP)
-//      newP._1 match
-//        case p: Pair => p
-//        case _ => throw new Exception("should not happen")
-
-    lazy val explode: Pair =
-//      def rec(p: SnailFishNumber, depth:Int=0): SnailFishNumber =
-//        p match
-//          case Pair(Num(a), Num(b)) =>
-//            val newMapping = mapping :+ ((l, i), p)
-//            rec(a, newMapping) ++ rec(b, newMapping)
-//          case Num(_, l, i) =>
-//            mapping :+ ((l, i), p)
-//
-//
-//      val mapping = rec(this, List.empty)
-      this
-
-//      def rec(p: SnailFishNumber, level: Int = 0, leftPos: Int = 0): SnailFishNumber = p match
-//        case Pair(a, b) if level < 4 => Pair(rec(a, level + 1, leftPos), rec(b, level + 1, leftPos + 1))
-//
-//       // get elem level 4  => parent
-//
-//
-//
-//      rec(this)
-
-
-  object Pair:
-    def apply(pairList: List[SnailFishNumber]): Pair = pairList match
-      case l :: r :: Nil =>
-        Pair(l, r)
+    def magnitude: Long =
+      this match {
+        case Num(value)        => value
+        case Pair(left, right) => 3L * left.magnitude + 2L * right.magnitude
+      }
+    def +(that: SnailFishNumber): SnailFishNumber = Pair(this, that).reduce
 
   case class Num(n: Int) extends SnailFishNumber:
     override def toString: String = n.toString
+
+  case class Pair(left: SnailFishNumber, right: SnailFishNumber) extends SnailFishNumber:
+    override def toString: String = s"[$left,$right]"
+
+    def addToLeft(number: SnailFishNumber, toAdd: Int): SnailFishNumber =
+      number match {
+        case Num(value)        => Num(value + toAdd)
+        case Pair(left, right) => Pair(addToLeft(left, toAdd), right)
+      }
+
+    def addToRight(number: SnailFishNumber, toAdd: Int): SnailFishNumber =
+      number match {
+        case Num(value)        => Num(value + toAdd)
+        case Pair(left, right) => Pair(left, addToRight(right, toAdd))
+      }
+
+    def explode(number: SnailFishNumber, depth: Int = 0): (Int, SnailFishNumber, Int) =
+      number match {
+        case regular: Num =>
+          (0, regular, 0)
+
+        case Pair(Num(left), Num(right)) if depth >= 4 =>
+          (left, Num(0), right)
+
+        case pair @ Pair(Num(_), Num(_)) =>
+          (0, pair, 0)
+
+        case pair @ Pair(left, right) =>
+          lazy val (leftAddL, newLeft, leftAddR)    = explode(left, depth + 1)
+          lazy val (rightAddL, newRight, rightAddR) = explode(right, depth + 1)
+
+          if (newLeft != left) (leftAddL, Pair(newLeft, addToLeft(right, leftAddR)), 0)
+          else if (newRight != right) (0, Pair(addToRight(left, rightAddL), newRight), rightAddR)
+          else (0, pair, 0)
+      }
+
+    def split(number: SnailFishNumber): SnailFishNumber =
+      number match {
+        case Num(value) if value >= 10 =>
+          Pair(Num(value / 2), Num(value - value / 2))
+
+        case num: Num =>
+          num
+
+        case pair @ Pair(left, right) =>
+          lazy val newLeft  = split(left)
+          lazy val newRight = split(right)
+
+          if (newLeft != left) Pair(newLeft, right)
+          else if (newRight != right) Pair(left, newRight)
+          else pair
+      }
+
+    lazy val reduce: SnailFishNumber = reduceLoop(this)
+    def reduceLoop(number: SnailFishNumber): SnailFishNumber = {
+      lazy val (_, tryExplode, _) = explode(number)
+      lazy val trySplit           = split(number)
+      if (tryExplode != number) reduceLoop(tryExplode)
+      else if (trySplit != number) reduceLoop(trySplit)
+      else number
+    }
+
+  object Pair:
+
+    def apply(pairList: List[SnailFishNumber]): Pair = pairList match
+      case l :: r :: Nil =>
+        Pair(l, r)
 
   object SnailFishNumber:
     def apply(str: String): SnailFishNumber =

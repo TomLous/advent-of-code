@@ -23,14 +23,16 @@ object Solution {
 
 
   def solvePart1(input: List[SnailFishNumber]): ZIO[Any, Throwable, Long] =
-
-    val sum = input(0) + input(1)
-
-    println(sum)
-
-    ZIO.succeed(0L)
+    ZIO.succeed(input.reduce(_ + _).magnitude)
 
   def solvePart2(input: List[SnailFishNumber]): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(0L)
+
+    val max = (for{
+      combination  <- input.combinations(2)
+      permutation  <- combination.permutations
+      sum           =  permutation.reduce(_ + _)
+    } yield sum.magnitude).max
+
+    ZIO.succeed(max)
 
 }

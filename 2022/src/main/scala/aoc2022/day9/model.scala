@@ -32,29 +32,36 @@ object model {
       math.abs(x - otherPoint.x) <= 1 && math.abs(y - otherPoint.y) <= 1
 
   case class RopeBridge(input: List[Input]):
+    // consider moves as moves of 1 unit
     lazy val exploded: List[Input] = input.flatMap(in => List.fill(in.distance)(1).map(d => Input(in.direction, d)))
 
-    def run(numKnots: Int): (List[Point], Map[Int, List[Point]]) = {
-      val knotsMap: Map[Int, List[Point]] = (0 until numKnots).map(i => i -> List(Point(0, 0))).toMap
+    def run(numKnots: Int): Map[Int, List[Point]] = {
+      // init all knots
+      val knotsMap: List[(Int, List[Point])] = (0 to numKnots).map(i => i -> List(Point(0, 0))).toList
 
+      // for each 1 step move
       exploded
-        .foldLeft((List(Point(0, 0)), knotsMap)) { case ((lastHead :: otherHeadPoints, knots), input) =>
-          val sortedKnots = knots.toList.sortBy(_._1)
-          val newHead     = lastHead.move(input)
-          val (_, newKnotPoints) = sortedKnots.foldLeft((newHead, List.empty[(Int, Point)])) {
+        .foldLeft(knotsMap) { case (headKnot :: tailKnots, input) =>
+          // move the head
+          val newHead = headKnot._2.head.move(input)
+
+          // move the knots by folding over each knot's predecessor
+          val (_, newKnotPoints) = tailKnots.foldLeft((newHead, List(0 -> newHead))) {
+            // if the knot touches the knot it follow, don't move it
             case ((followingPoint, addedKnotPoints), (_, knotLastVisited :: _)) if knotLastVisited.touches(followingPoint) =>
               (knotLastVisited, addedKnotPoints)
+            // other wise follow the knot based on the knot's predecessor
             case ((followingPoint, addedKnotPoints), (knot, knotLastVisited :: _)) =>
               val newKnotPoint = knotLastVisited.follow(followingPoint)
               (newKnotPoint, (knot, newKnotPoint) :: addedKnotPoints)
           }
-          val newKnots = knots.map { case (knot, currentKnotPoints) =>
-            newKnotPoints.find(_._1 == knot).map(_._2) match
-              case Some(newKnotPoint) => knot -> (newKnotPoint :: currentKnotPoints)
-              case None               => knot -> currentKnotPoints
+
+          // add the new knot points to the map
+          newKnotPoints.foldLeft(headKnot :: tailKnots) { case (accMap, (knot, point)) =>
+            accMap.updated(knot, (knot, point :: accMap(knot)._2))
           }
-          (newHead :: lastHead :: otherHeadPoints, newKnots)
         }
+        .toMap
     }
 
 }

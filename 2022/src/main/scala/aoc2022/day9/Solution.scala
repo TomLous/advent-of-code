@@ -12,13 +12,12 @@ object Solution {
   def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, RopeBridge] = lineStream.map(parseLine).runCollect.map(_.toList).map(RopeBridge)
 
   def solvePart1(input: RopeBridge): ZIO[Any, Throwable, Long] =
-
-    val (_, tailPos) = input.run(1)
-    ZIO.succeed(tailPos(0).distinct.size)
+    val knotPos = input.run(1)
+    ZIO.succeed(knotPos(1).distinct.size)
 
   def solvePart2(input: RopeBridge): ZIO[Any, Throwable, Long] =
-    val (_, tailPos) = input.run(9)
-    ZIO.succeed(tailPos(8).distinct.size)
+    val knotPos = input.run(9)
+    ZIO.succeed(knotPos(9).distinct.size)
 
 
 }

@@ -26,6 +26,6 @@ object Solution {
     ZIO.succeed(input.enhance(2).lit)
 
   def solvePart2(input: Trench): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(0L)
+    ZIO.succeed(input.enhance(50).lit)
 
 }

@@ -10,13 +10,17 @@ object Solution {
     case "noop" => Noop
     case s"addx $x" => AddX(x.toInt)
 
-  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, CRT] = lineStream.map(parseLine).runCollect.map(_.toList).map(CRT)
+  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, CRT] = lineStream
+    .map(parseLine)
+    .runCollect
+    .map(_.toList)
+    .map(CRT)
 
   def solvePart1(input: CRT): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.run1)
+    ZIO.succeed(input.signalStrength)
 
 
   def solvePart2(input: CRT): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.run2)
+    ZIO.succeed(input.printCRT)
 
 }

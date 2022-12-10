@@ -13,14 +13,7 @@ import scalax.collection.mutable.DefaultGraphImpl
 object model {
 
   case class Image(matrix: DenseMatrix[Int], infinite: Int = 0):
-    lazy val lit: Int = {
-      val allItems = matrix.toArray
-      println(" - - - - - ")
-//      println(matrix)
-//      println(allItems.length)
-//      println(allItems.sum)
-      matrix.toArray.sum
-  }
+    lazy val lit: Int = matrix.toArray.sum
 
     val extend = 3
 
@@ -31,39 +24,24 @@ object model {
     }
 
 
-    def enhance(algorithm: List[Int], infinite: Int = 0): Image =
-      val enhancedMatrix = DenseMatrix.fill[Int](matrix.rows + extend, matrix.cols + extend)(infinite)
+    def enhance(algorithm: List[Int]): Image =
+      val newInfinite = algorithm(Integer.parseInt(expandedImage(0 until 3, 0 until 3).t.toArray.mkString(""), 2))
+      val enhancedMatrix = DenseMatrix.fill[Int](matrix.rows + extend, matrix.cols + extend)(newInfinite)
       for {
         x <- 0 until enhancedMatrix.cols
         y <- 0 until enhancedMatrix.rows
-        inputMatrix = expandedImage(x until x + 3, y until y + 3).t
-//        _ = println(s"-> $x $y")
-//        _ = println(inputMatrix)
-        inputMatrixBin = inputMatrix.toArray.mkString("")
-//        _ = println(inputMatrixBin)
-        algoIndex = Integer.parseInt(inputMatrixBin, 2)
+        algoIndex = Integer.parseInt(
+          expandedImage(x until x + 3, y until y + 3).t.toArray
+            .mkString(""),
+          2
+        )
         _ = enhancedMatrix(x, y) = algorithm(algoIndex)
-//      algoIndex = Integer.parseInt(
-//        expandedImage(x until x + 3, y until y + 3).t.toArray
-//          .mkString(""),
-//        2
-//      )
-//      _ = enhancedMatrix(x, y) = algorithm(algoIndex)
       } yield ()
 
-//      val i = enhancedMatrix(0 until 3, 0 until 3)
-
-//      val infinite = algorithm(Integer.parseInt(i.t.toArray.mkString(""), 2))
-
-      Image(enhancedMatrix, 0)
+      Image(enhancedMatrix, newInfinite)
 
   case class Trench(image: Image, algorithm: List[Int]):
-    def enhance(num: Int): Image = (0 until num).foldLeft(image)((img, i) => {
-      println(" -- " + i)
-      val e = img.enhance(algorithm)
-      println(e)
-      e
-    })
+    def enhance(num: Int): Image = (0 until num).foldLeft(image)((img, _) => img.enhance(algorithm))
 
 
   object Trench {

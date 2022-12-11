@@ -11,7 +11,7 @@ object Solution {
     case s"addx $x" => AddX(x.toInt)
 
   def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, CRT] = lineStream
-    .map(parseLine)
+    .map(parseLine) // TODO make this streaming with zipping the pos with the Input etc etc
     .runCollect
     .map(_.toList)
     .map(CRT)

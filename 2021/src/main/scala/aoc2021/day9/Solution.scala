@@ -11,20 +11,24 @@ import zio.stream.*
 object Solution {
 
 
-  val getEdges = ZPipeline.mapChunks[Chunk[(List[Int], Long)], DiEdge[Point]](_.flatMap(_.toList match
-    case (previousLine, _) :: (currentLine, y) :: (nextLine, _) :: Nil =>
-      Chunk.fromIterator(
-        (None +: currentLine.zipWithIndex.map(Some(_)) :+ None).sliding(3).flatMap { case previousItem :: Some(value, pos) :: nextItem :: Nil =>
-          val currentPoint = Point(value, pos.toLong, y)
-          val up           = previousLine.lift(pos).map(Point(_, pos.toLong, y - 1))
-          val down         = nextLine.lift(pos).map(Point(_, pos.toLong, y + 1))
-          val left         = previousItem.map(_._1).map(Point(_, (pos - 1).toLong, y))
-          val right        = nextItem.map(_._1).map(Point(_, (pos + 1).toLong, y))
+  val getEdges = ZPipeline.mapChunks[Chunk[(List[Int], Long)], UnDiEdge[Point]](_.flatMap(_.toList match
+    case (currentRow, y) :: (nextRow, yd) :: Nil  =>
+      currentRow.zipWithIndex.sliding(2).toList.flatMap {
+        case (value, x) :: (nextVal, xr) :: Nil =>
+          val currentPoint = Point(value, x, y)
+          val pointR = Point(nextVal, xr, y)
+          val pointD = Point(nextRow(x), x, yd)
+          val pointRD = Point(nextRow(xr), xr, yd)
 
-          List(up, down, left, right).flatten.map(_.createEdge(currentPoint))
+          List(
+            currentPoint ~ pointR,
+            currentPoint ~ pointD,
+            currentPoint ~ pointRD,
+            pointR ~ pointRD,
+            pointD ~ pointRD,
+            pointR ~ pointD
+          )
         }
-      )
-    case other => throw new Exception(s"Unexpected list: $other")
   ))
 
   def parseLine(line: String): List[Int] = line.toCharArray.map(_.asDigit).toList

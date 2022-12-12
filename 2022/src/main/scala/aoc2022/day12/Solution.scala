@@ -10,6 +10,15 @@ import zio.stream.*
 
 object Solution {
 
+  def cornerEdges(cornerPoint: Point, otherPoints: List[Point]):List[DiEdge[Point]] =
+    otherPoints.foldLeft(List.empty[DiEdge[Point]]){
+      case (l, point) =>
+        List(
+          if point.canReach(cornerPoint) then Some(point ~> cornerPoint) else None,
+          if cornerPoint.canReach(point) then Some(cornerPoint ~> point) else None
+        ).flatten ::: l
+     }
+
   val getEdges = ZPipeline.mapChunks[Chunk[(List[Char], Long)], DiEdge[Point]](_.flatMap(_.toList match
     case (currentRow, y) :: (nextRow, yd) :: Nil =>
       currentRow.zipWithIndex.sliding(2).toList.flatMap { case (height, x) :: (nextHeight, xr) :: Nil =>
@@ -18,16 +27,7 @@ object Solution {
         val pointD       = Point(nextRow(x), x, yd)
         val pointRD      = Point(nextRow(xr), xr, yd)
 
-        List(
-          if currentPoint.canReach(pointR) then Some(currentPoint ~> pointR) else None,
-          if pointR.canReach(currentPoint) then Some(pointR ~> currentPoint) else None,
-          if currentPoint.canReach(pointD) then Some(currentPoint ~> pointD) else None,
-          if pointD.canReach(currentPoint) then Some(pointD ~> currentPoint) else None,
-          if pointR.canReach(pointRD) then Some(pointR ~> pointRD) else None,
-          if pointRD.canReach(pointR) then Some(pointRD ~> pointR) else None,
-          if pointD.canReach(pointRD) then Some(pointD ~> pointRD) else None,
-          if pointRD.canReach(pointD) then Some(pointRD ~> pointD) else None,
-        ).flatten
+        cornerEdges(currentPoint, List(pointR, pointD)) ++ cornerEdges(pointRD, List(pointR, pointD))
       }
   ))
 

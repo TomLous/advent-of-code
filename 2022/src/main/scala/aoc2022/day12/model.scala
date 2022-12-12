@@ -22,24 +22,26 @@ object model {
 
   case class Hill(graph: Graph[Point, DiEdge]):
     private lazy val start = graph.nodes.find(_.value.isStart).get
-    private lazy val end  = graph.nodes.find(_.value.isEnd).get
+    private lazy val end   = graph.nodes.find(_.value.isEnd).get
 
-    private def node(point: Point): graph.NodeT = graph get point
+    private def shortestPathLength(a: graph.NodeT, b: graph.NodeT): Long =
+      graph
+        .get(a)
+        .shortestPathTo(graph.get(b))(Visitor.empty)
+        .map(_.nodes.size - 1)
+        .getOrElse(Int.MaxValue)
+        .toLong
 
     lazy val getShortestPathSize: Long =
-      val p = graph
-        .get(start)
-        .shortestPathTo(graph.get(end))(Visitor.empty)
-        .map(_.nodes.size - 1)
-        .getOrElse(0).toLong
+      shortestPathLength(start, end)
 
-      println(graph)
-      println(s"Shortest path size: $p")
-      println(s"startCave: $start")
-      println(s"endCave: $end")
-
-      p
-
+    lazy val getAnyAShortestPathSize: Long =
+      graph.nodes
+        .filter(_.value.weight == 'a')
+        .map { startNode =>
+          shortestPathLength(startNode, end)
+        }
+        .min
 
   object Hill:
     def apply(edges: Set[DiEdge[Point]]): Hill =

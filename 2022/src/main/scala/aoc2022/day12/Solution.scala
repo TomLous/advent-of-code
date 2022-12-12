@@ -50,7 +50,6 @@ object Solution {
     ZIO.succeed(input.getShortestPathSize)
 
   def solvePart2(input: Hill): ZIO[Any, Throwable, Long] =
-    // TODO: implement
-    ZIO.succeed(0L)
+    ZIO.succeed(input.getAnyAShortestPathSize)
 
 }

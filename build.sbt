@@ -13,6 +13,7 @@ lazy val zio2Libs = Seq(
   "dev.zio"     %% "zio-test-sbt"      % "2.0.4" % Test,
   "dev.zio"     %% "zio-test-magnolia" % "2.0.4" % Test,
   "dev.zio"     %% "zio-optics"        % "0.2.0",
+  "dev.zio"     %% "zio-json"          % "0.4.2",
   "fr.janalyse" %% "zio-worksheet"     % "2.0.4.0"
 )
 

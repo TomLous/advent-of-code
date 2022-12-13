@@ -9,16 +9,16 @@ import zio.stream.*
 
 object model {
 
-  case class Point(height: Char, x: Long, y: Long):
-    lazy val isStart: Boolean = height == 'S'
-    lazy val isEnd: Boolean   = height == 'E'
-    lazy val weight: Char = height match
+  case class Point(code: Char, x: Long, y: Long):
+    lazy val isStart: Boolean = code == 'S'
+    lazy val isEnd: Boolean   = code == 'E'
+    lazy val height: Char = code match
       case 'S' => 'a'
       case 'E' => 'z'
-      case _   => height
+      case _   => code
 
     def canReach(otherPoint: Point): Boolean =
-      otherPoint.weight - weight <= 1
+      otherPoint.height - height <= 1
 
   case class Hill(graph: Graph[Point, DiEdge]):
     private lazy val start = graph.nodes.find(_.value.isStart).get
@@ -37,7 +37,7 @@ object model {
 
     lazy val getAnyAShortestPathSize: Long =
       graph.nodes
-        .filter(_.value.weight == 'a')
+        .filter(_.value.height == 'a')
         .map { startNode =>
           shortestPathLength(startNode, end)
         }

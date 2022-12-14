@@ -15,7 +15,7 @@ object Puzzle extends ZIOAppDefault {
 
   private val program = for {
     data      <- Solution.parseInput(puzzleData).timed.flatMap(logging("Parsed data"))
-//    _         <- Solution.solvePart1(data).timed.flatMap(logging("Result of the puzzle in part 1: ", appendOutput = true))
+    _         <- Solution.solvePart1(data).timed.flatMap(logging("Result of the puzzle in part 1: ", appendOutput = true))
     _         <- Solution.solvePart2(data).timed.flatMap(logging("Result of the puzzle in part 2: ", appendOutput = true))
   } yield ()
 

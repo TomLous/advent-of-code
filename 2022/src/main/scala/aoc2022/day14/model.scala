@@ -1,6 +1,8 @@
 package aoc2022.day14
 
+import breeze.generic.UFunc
 import breeze.linalg.*
+import breeze.linalg.operators.*
 import breeze.numerics.*
 
 import scala.util.*
@@ -10,10 +12,17 @@ object model {
   case class Point(x: Int, y:  Int, value: Int)
 
   case class Cave(matrix: DenseMatrix[Int]):
+    override def toString: String = matrixToString(matrix)
 
-    lazy val withFloor:Cave =
-      matrix(matrix.rows - 1, ::) := 1
-      this
+    lazy val addFloor:Cave =
+      val newMatrix = matrix.copy
+      newMatrix(matrix.rows - 1, ::) := 1
+      Cave(newMatrix)
+
+    lazy val removeSand:Cave =
+      val removeSandF = UFunc[Int, Int](i => if i == 2 then 0 else i)
+      val newMatrix = matrix.copy
+      Cave(removeSandF(newMatrix))
 
     def matrixToString(m: DenseMatrix[Int]): String =
         (0 until m.rows)
@@ -27,25 +36,24 @@ object model {
           .mkString("\n"
           )
 
+
+
     def dropSandFrom(sandOutlet: Point):List[Point] =
       def dropSand:Option[Point] ={
         def rec(currentX: Int, currentY: Int):Option[Point] = {
           if currentY + 1 == matrix.rows then
-            None // next is off the chart
-          else if currentX + 1 == matrix.cols || currentX == 0 then
-            throw new Exception(s"matrix too narrow for x: $currentX")
+            None // next is off the chart, only happens without a floor (part1)
           else
-            val down = matrix(currentY+1, currentX)
-            val leftDown = matrix(currentY+1, currentX-1)
-            val rightDown = matrix(currentY+1, currentX+1)
-            if(down > 0)
+            if(matrix(currentY+1, currentX) > 0) // down is blocked
+              val leftDown = matrix(currentY+1, currentX-1)
+              val rightDown = matrix(currentY+1, currentX+1)
               if(leftDown > 0 && rightDown > 0) then
                 Some(Point(currentX, currentY, 2)) // we have a stable point
               else if(leftDown > 0)
                 rec(currentX + 1, currentY+1) // we have to go right down
               else
                 rec(currentX - 1, currentY+1) // we can go left down
-            else
+            else // down is free
               rec(currentX, currentY+1)
         }
         rec(sandOutlet.x, sandOutlet.y) match
@@ -59,6 +67,7 @@ object model {
             None
 
       }
+
 
       LazyList.continually(dropSand).takeWhile(_.isDefined).flatten.toList
 

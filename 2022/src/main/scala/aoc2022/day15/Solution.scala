@@ -17,7 +17,7 @@ object Solution {
     .map(Zone.apply)
 
   def solvePart1(input: Zone, row: Int): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.countVoid(row))
+    ZIO.succeed(input.countCovered(row))
 
   def solvePart2(input: Zone, maxRangeFromO: Long): ZIO[Any, Throwable, Long] =
     val point = input.findNondetecteableBeacon(maxRangeFromO)

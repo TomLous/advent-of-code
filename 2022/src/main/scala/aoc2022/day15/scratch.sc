@@ -27,13 +27,15 @@ val outerRange = range+1
 
 (0 until outerRange * 4).map{ i=>
   val y =  ((i+1) % (outerRange * 2 + 1)) - outerRange  
-  val x =  if(i>(outerRange * 2 - 1)) outerRange - y.abs else y.abs - outerRange
+  val x =  if(i>=outerRange * 2) outerRange - y.abs else y.abs - outerRange
   val row = point.row + y
   val col = point.col + x
   
   println(s"$i $y $x")
   m(row, col) = i+1
 }
+
+println(matrixToString(m))
 
 
 

@@ -14,26 +14,8 @@ object model {
   case class Point(row: Long, col: Long):
     def manhattanDistance(other: Point): Long = math.abs(col - other.col) + math.abs(row - other.row)
     lazy val tuningFrequency: Long            = (col * 4000000L) + row
-
-  case class Zone(matrix: DenseMatrix[Int], rowOffset: Int, colOffset: Int):
-    override def toString: String = matrixToString(matrix)
-
-    def countVoid(row: Int): Int = matrix(row + rowOffset, ::).t.toArray.count(_ == 3)
-
-    def matrixToString(m: DenseMatrix[Int]): String =
-      (0 until m.rows)
-        .map { row =>
-          (0 until m.cols).map { col =>
-            val p = m(row, col)
-            if p == 1 then "S"
-            else if p == 2 then "B"
-            else if p == 3 then "#"
-            else "·"
-          }.mkString
-        }
-        .mkString("\n")
-
-  case class Zone2(sensorBeacons: List[(Point, Point)]):
+  
+  case class Zone(sensorBeacons: List[(Point, Point)]):
     lazy val sensorRange: Map[Point, Long] = sensorBeacons.map { case (sensor, beacon) =>
       sensor -> sensor.manhattanDistance(beacon)
     }.toMap
@@ -41,13 +23,13 @@ object model {
     def sensorOuterPerimeter(maxRange: Int): ParSeq[Point] =
       for {
         (sensor, range) <- sensorRange.toList.par
-        outerRange = range + 1
-        i <- 0L until outerRange * 4L
-        y   = ((i + 1) % (outerRange * 2 + 1)) - outerRange
-        x   = if (i > (outerRange * 2 - 1)) outerRange - y.abs else y.abs - outerRange
+        outerRange = range + 1 // check the outside of the range
+        i <- 0L until outerRange * 4L // 4 sides of the diamond
+        y   = ((i + 1) % (outerRange * 2 + 1)) - outerRange // mod 2* the range with offset of 1 fon non overlapping points so from top -> bottom 2x
+        x   = if (i >= outerRange * 2) outerRange - y.abs else y.abs - outerRange // for the first loop do left side, otherside do right side
         row = sensor.row + y
-        col = sensor.col + x
-        if col >= 0 && row >= 0 && col <= maxRange && row <= maxRange
+        col = sensor.col + x //add to sensor position
+        if col >= 0 && row >= 0 && col <= maxRange && row <= maxRange //check if within the absolute max range (0 - maxRange)
       } yield Point(row, col)
 
     lazy val points: List[Point] = sensorBeacons.flatMap { case (sensor, beacon) =>

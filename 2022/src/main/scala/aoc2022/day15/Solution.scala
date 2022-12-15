@@ -10,16 +10,16 @@ object Solution {
     case s"Sensor at x=$sx, y=$sy: closest beacon is at x=$bx, y=$by" =>
       (Point(sy.toLong, sx.toLong), Point(by.toLong, bx.toLong))
 
-  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, Zone2] = lineStream
+  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, Zone] = lineStream
     .map(parseLine)
     .runCollect
     .map(_.toList)
-    .map(Zone2.apply)
+    .map(Zone.apply)
 
-  def solvePart1(input: Zone2, row: Int): ZIO[Any, Throwable, Long] =
+  def solvePart1(input: Zone, row: Int): ZIO[Any, Throwable, Long] =
     ZIO.succeed(input.countVoid(row))
 
-  def solvePart2(input: Zone2, maxRangeFromO: Long): ZIO[Any, Throwable, Long] =
+  def solvePart2(input: Zone, maxRangeFromO: Long): ZIO[Any, Throwable, Long] =
     val point = input.findNondetecteableBeacon(maxRangeFromO)
     ZIO.succeed(point.tuningFrequency)
 

@@ -24,16 +24,22 @@ object Solution {
 
 
   def solvePart1(input: Game): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.deterministic.score)
+    val score = input.deterministic match
+      case GameState(ps, d:DertiministicDie, _) => ps.map(_.score).min * d.timesRolled
+    
+    ZIO.succeed(score)
 
   def solvePart2(input: Game): ZIO[Any, Throwable, Long] =
-    val numWins = input.quantum.toList.sortBy(-_._2).head._2
+    val gs = input.quantum
+    println(gs.size)
+    val numWins = gs.groupBy(_.winner).map(_._2.map(_.universes.toLong).sum)
+    numWins.foreach(println)
 //      .groupMapReduce(identity)(_ => 1)(_ + _)
 //      .toList
 //      .sortBy(-_._2)
 //      map(_.playerScores.head)
 
 
-    ZIO.succeed(numWins)
+    ZIO.succeed(numWins.max)
 
 }

@@ -10,30 +10,28 @@ import zio.stream.*
 
 object Solution {
 
-
   val getEdges = ZPipeline.mapChunks[Chunk[(List[Int], Long)], UnDiEdge[Point]](_.flatMap(_.toList match
-    case (currentRow, y) :: (nextRow, yd) :: Nil  =>
-      currentRow.zipWithIndex.sliding(2).toList.flatMap {
-        case (value, x) :: (nextVal, xr) :: Nil =>
-          val currentPoint = Point(value, x, y)
-          val pointR = Point(nextVal, xr, y)
-          val pointD = Point(nextRow(x), x, yd)
-          val pointRD = Point(nextRow(xr), xr, yd)
+    case (currentRow, y) :: (nextRow, yd) :: Nil =>
+      currentRow.zipWithIndex.sliding(2).toList.flatMap { case (value, x) :: (nextVal, xr) :: Nil =>
+        val currentPoint = Point(value, x, y)
+        val pointR       = Point(nextVal, xr, y)
+        val pointD       = Point(nextRow(x), x, yd)
+        val pointRD      = Point(nextRow(xr), xr, yd)
 
-          List(
-            currentPoint ~ pointR,
-            currentPoint ~ pointD,
-            currentPoint ~ pointRD,
-            pointR ~ pointRD,
-            pointD ~ pointRD,
-            pointR ~ pointD
-          )
-        }
+        List(
+          currentPoint ~ pointR,
+          currentPoint ~ pointD,
+          currentPoint ~ pointRD,
+          pointR ~ pointRD,
+          pointD ~ pointRD,
+          pointR ~ pointD
+        )
+      }
   ))
 
   def parseLine(line: String): List[Int] = line.toCharArray.map(_.asDigit).toList
 
-  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, Graph[Point, DiEdge]] =
+  def parseInput(lineStream: ZStream[Any, Throwable, String]): ZIO[Any, Throwable, Graph[Point, UnDiEdge]] =
     for {
       edges <- (ZStream.fromChunk(Chunk(List.empty[Int])) ++ lineStream
         .map(parseLine) ++ ZStream.fromChunk(Chunk(List.empty[Int]))).zipWithIndex
@@ -45,7 +43,7 @@ object Solution {
       graph <- ZIO.succeed(Graph.from(Nil, edges))
     } yield graph
 
-  def solvePart1(input: Graph[Point, DiEdge]): ZIO[Any, Throwable, Long] =
+  def solvePart1(input: Graph[Point, UnDiEdge]): ZIO[Any, Throwable, Long] =
     ZIO.succeed(
       input.nodes
         .filter(_.diSuccessors.isEmpty)
@@ -54,7 +52,7 @@ object Solution {
         .sum
     )
 
-  def solvePart2(input: Graph[Point, DiEdge]): ZIO[Any, Throwable, Long] =
+  def solvePart2(input: Graph[Point, UnDiEdge]): ZIO[Any, Throwable, Long] =
     ZIO.succeed(
       (input -- input.nodes.filter(_.value.value == 9))
         .componentTraverser()

@@ -47,10 +47,11 @@ object model {
     private def distance(from: graph.NodeT, to: graph.NodeT): Int =
       from.shortestPathTo(to)(Visitor.empty).map(_.nodes.size - 1).get
 
+    // dedupe same route states based on max pressure
     private def optimized(states: Set[RouteState]): Set[RouteState] =
       states
         .groupBy(_.valvesOpenened)
-        .map { case (k, v) => v.maxBy(_.pressure) }
+        .map { case (_, v) => v.maxBy(_.pressure) }
         .toSet
 
     def duoRoutes(minutes: Int): Long =
@@ -78,40 +79,45 @@ object model {
       def optimalRouteScore(states: Set[RouteState], maxPressure: Long = 0, allStates: Set[RouteState] = Set.empty): (Long, Set[RouteState]) = {
         val (newMax, newStates) = states
           .foldLeft((maxPressure, Set.empty[RouteState])) {
+            // if the route will never be able to reach the max pressure, don't bother (for part 2: do bother)
             case ((currentMaxPressure, otherStates), RouteState(_, timeSpent, pressure, _, _)) if onlyOptimized && pressure + ((minutes - timeSpent) * maxFlowRate) < currentMaxPressure =>
-              (currentMaxPressure, otherStates) // no need to explore this route, because it will not be optimal
+              (currentMaxPressure, otherStates)
+
+            // if the route has valves to explore
             case ((currentMaxPressure, otherStates), RouteState(current, timeSpent, pressure, valvesToOpen, valvesOpenened)) if valvesToOpen.nonEmpty =>
               val newStates: Set[RouteState] = valvesToOpen
-                .map(next => (next, distanceToNodes(current)(next) + timeSpent + 1))
-                .filter { case (node, timeTotal) =>
-                  timeTotal <= minutes
-                }
-                .map { case (next, newTime) =>
+                .map(next => (next, distanceToNodes(current)(next) + timeSpent + 1))  // map with distance to next valve
+                .filter(_._2 <= minutes) // ignore valves that can't be reached in time
+                .map { case (next, newTime) => // add the route to the new states
                   RouteState(next, newTime, pressure + next.flowRate * (minutes - newTime), valvesToOpen - next, valvesOpenened + next)
                 }
-
               (currentMaxPressure max pressure, otherStates ++ newStates)
+
+            // if the route has no valves to explore
             case ((currentMaxPressure, otherStates), RouteState(_, _, pressure, _, _)) =>
               (currentMaxPressure max pressure, otherStates)
           }
 
+        // if no more states to explore, return the max pressure
         if (newStates.isEmpty)
           (newMax, allStates)
         else
-          optimalRouteScore(newStates, newMax, optimized(allStates ++ newStates))
+          optimalRouteScore(optimized(newStates), newMax, optimized(allStates ++ newStates))
       }
 
       optimalRouteScore(Set(RouteState(rootValve, valvesToOpen = valvesToOpen)))
 
   object Volcano:
     def apply(input: List[(Valve, List[String])]): Volcano =
-      val allEdges = input.foldLeft(List.empty[UnDiEdge[Valve]]) { case (edges, (valve, tunnels)) =>
-        val newEdges = tunnels.map { name =>
-          input.find(_._1.name == name).map(_._1 ~ valve).get
-        }
-        edges ++ newEdges
+      val allEdges = input.foldLeft(List.empty[UnDiEdge[Valve]]) {
+        case (edges, (valve, tunnels)) =>
+          edges ++ tunnels.flatMap { name =>
+            input.find(_._1.name == name).map(_._1 ~ valve)
+          }
       }
 
-      Volcano(Graph.from(Nil, allEdges), input.find(_._1.name == "AA").get._1)
+      val root = input.find(_._1.name == "AA").get._1
+
+      Volcano(Graph.from(Nil, allEdges), root)
 
 }

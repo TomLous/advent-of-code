@@ -3,6 +3,9 @@ package aoc2022.day16
 import model.*
 import zio.*
 import zio.stream.*
+import scala.annotation.tailrec
+import scala.collection.parallel.CollectionConverters.*
+import scala.collection.parallel.ParSeq
 
 object Solution {
 
@@ -17,10 +20,11 @@ object Solution {
       .map(Volcano.apply)
 
   def solvePart1(input: Volcano): ZIO[Any, Throwable, Long] =
-    ZIO.succeed(input.releasePressureMax(30))
+    ZIO.succeed(input.releasePressureMaxRoutes(30)._1)
 
   def solvePart2(input: Volcano): ZIO[Any, Throwable, Long] =
-    // TODO: implement
-    ZIO.succeed(0L)
+    ZIO.succeed(input.duoRoutes(26))
+
+
 
 }

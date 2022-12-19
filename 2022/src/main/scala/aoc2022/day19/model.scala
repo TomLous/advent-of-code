@@ -2,7 +2,6 @@ package aoc2022.day19
 
 object model {
 
-
   trait Robot:
     def make(mineralState: MineralState, robotState: RobotState): Option[(MineralState, RobotState)]
 
@@ -16,7 +15,7 @@ object model {
       else None
 
   case class ClayRobot(ore: Int) extends Robot:
-    def make(mineralState: MineralState, robotState: RobotState): Option[(MineralState, RobotState)]=
+    def make(mineralState: MineralState, robotState: RobotState): Option[(MineralState, RobotState)] =
       if (mineralState.oreDelved >= ore)
         Some(
           mineralState.copy(oreDelved = mineralState.oreDelved - ore),
@@ -50,14 +49,13 @@ object model {
   ):
     override def toString: String = s"$oreDelved ore\t\t\t$clayDelved clay\t\t\t$obsidianDelved obsidian\t$geodeDelved geode"
 
-    def allMax(other: MineralState):Set[MineralState] =
-      if(oreDelved >= other.oreDelved && clayDelved >= other.clayDelved && obsidianDelved >= other.obsidianDelved && geodeDelved >= other.geodeDelved)
+    def allMax(other: MineralState): Set[MineralState] =
+      if (oreDelved >= other.oreDelved && clayDelved >= other.clayDelved && obsidianDelved >= other.obsidianDelved && geodeDelved >= other.geodeDelved)
         Set(this)
-      else if(oreDelved < other.oreDelved && clayDelved < other.clayDelved && obsidianDelved < other.obsidianDelved && geodeDelved < other.geodeDelved)
+      else if (oreDelved < other.oreDelved && clayDelved < other.clayDelved && obsidianDelved < other.obsidianDelved && geodeDelved < other.geodeDelved)
         Set(other)
       else
         Set(this, other)
-
 
   case class RobotState(
     oreRobots: Long = 0L,
@@ -65,7 +63,7 @@ object model {
     obsidianRobots: Long = 0L,
     geodeRobots: Long = 0L
   ):
-      override def toString: String = s"$oreRobots ore robots\t$clayRobots clay robots\t$obsidianRobots robots\t$geodeRobots geode robots"
+    override def toString: String = s"$oreRobots ore robots\t$clayRobots clay robots\t$obsidianRobots robots\t$geodeRobots geode robots"
 
   case class BlueprintState(blueprint: Blueprint, mineralState: MineralState, robotState: RobotState):
     override def toString: String =
@@ -79,16 +77,15 @@ object model {
     def score: Long = mineralState.geodeDelved * blueprint.num
     lazy val arbritraryScore: Long = (mineralState.geodeDelved * 100000 + robotState.geodeRobots * 50000) +
       (mineralState.obsidianDelved * 1000 + robotState.obsidianRobots * 500) +
-        (mineralState.clayDelved * 10 + robotState.clayRobots * 5) +
-          (mineralState.oreDelved * 2 +  robotState.oreRobots)
-
+      (mineralState.clayDelved * 10 + robotState.clayRobots * 5) +
+      (mineralState.oreDelved * 2 + robotState.oreRobots)
 
     lazy val makeOreRobot: Option[(MineralState, RobotState)] =
-      if(robotState.oreRobots < blueprint.maxOreExpensePerMinute)
+      if (robotState.oreRobots < blueprint.maxOreExpensePerMinute)
         blueprint.ore.make(mineralState, robotState)
       else None
 
-    lazy val makeClayRobot:  Option[(MineralState, RobotState)] =
+    lazy val makeClayRobot: Option[(MineralState, RobotState)] =
       if (robotState.clayRobots < blueprint.maxClayExpensePerMinute)
         blueprint.clay.make(mineralState, robotState)
       else None
@@ -98,37 +95,39 @@ object model {
         blueprint.obsidian.make(mineralState, robotState)
       else None
 
-    lazy val makeGeodeRobot:  Option[(MineralState, RobotState)] = blueprint.geode.make(mineralState, robotState)
+    lazy val makeGeodeRobot: Option[(MineralState, RobotState)] = blueprint.geode.make(mineralState, robotState)
 
-    lazy val skipBuildRobot:  Option[(MineralState, RobotState)] =
-      if(
+    lazy val skipBuildRobot: Option[(MineralState, RobotState)] =
+      if (
         (robotState.clayRobots > 0 && mineralState.clayDelved < blueprint.maxClayExpensePerMinute) ||
-          (robotState.oreRobots > 0 && mineralState.oreDelved < blueprint.maxOreExpensePerMinute) ||
-          (robotState.obsidianRobots > 0 && mineralState.obsidianDelved < blueprint.maxObsidianExpensePerMinute))
+        (robotState.oreRobots > 0 && mineralState.oreDelved < blueprint.maxOreExpensePerMinute) ||
+        (robotState.obsidianRobots > 0 && mineralState.obsidianDelved < blueprint.maxObsidianExpensePerMinute)
+      )
         Some(mineralState, robotState)
       else None
 
-    lazy val minuteStep: Set[BlueprintState] = {
-        makeGeodeRobot.map(Set(_)).getOrElse(
+    lazy val minuteStep: Set[BlueprintState] =
+      makeGeodeRobot
+        .map(Set(_))
+        .getOrElse(
           List(makeObsidianRobot, makeClayRobot, makeOreRobot, skipBuildRobot).flatten.toSet
-        ).map{
-            case (newMineralState, newRobotState) =>
-              BlueprintState(
-                blueprint,
-                mineralState.copy(
-                  oreDelved = robotState.oreRobots + newMineralState.oreDelved,
-                  clayDelved = robotState.clayRobots + newMineralState.clayDelved,
-                  obsidianDelved = robotState.obsidianRobots + newMineralState.obsidianDelved,
-                  geodeDelved = robotState.geodeRobots + newMineralState.geodeDelved
-                ),
-                newRobotState
-              )
-          }
-  }
+        )
+        .map { case (newMineralState, newRobotState) =>
+          BlueprintState(
+            blueprint,
+            mineralState.copy(
+              oreDelved = robotState.oreRobots + newMineralState.oreDelved,
+              clayDelved = robotState.clayRobots + newMineralState.clayDelved,
+              obsidianDelved = robotState.obsidianRobots + newMineralState.obsidianDelved,
+              geodeDelved = robotState.geodeRobots + newMineralState.geodeDelved
+            ),
+            newRobotState
+          )
+        }
 
   object BlueprintState:
     def apply(blueprint: Blueprint): BlueprintState =
-      BlueprintState(blueprint, mineralState=MineralState(), robotState=RobotState(oreRobots = 1L))
+      BlueprintState(blueprint, mineralState = MineralState(), robotState = RobotState(oreRobots = 1L))
 
   case class Blueprint(num: Int, ore: OreRobot, clay: ClayRobot, obsidian: ObsidianRobot, geode: GeodeRobot):
     lazy val maxOreExpensePerMinute: Long      = ore.ore max clay.ore max obsidian.ore max geode.ore
@@ -136,33 +135,35 @@ object model {
     lazy val maxObsidianExpensePerMinute: Long = geode.obsidian
 
     def removeInferior(mineralStates: Set[MineralState]): Set[MineralState] =
-      mineralStates.toList.combinations(2).flatMap{
-        case a :: b :: Nil => a.allMax(b)
-      }.toSet
+      mineralStates.toList
+        .combinations(2)
+        .flatMap { case a :: b :: Nil =>
+          a.allMax(b)
+        }
+        .toSet
 
-    def optimize(states: Set[model.BlueprintState]):Set[model.BlueprintState] =
+    def optimize(states: Set[model.BlueprintState]): Set[model.BlueprintState] =
       states
         .groupBy(_.robotState)
-        .flatMap{
-          case (_, bs) if bs.size==1 => Set(bs.head)
+        .flatMap {
+          case (_, bs) if bs.size == 1 => Set(bs.head)
           case (rs, bs) =>
             val blueprint = bs.head.blueprint
-            removeInferior(bs.map(_.mineralState)).map(ms =>
-              BlueprintState(blueprint, ms, rs)
-            )
-        }.toList.sortBy(-_.arbritraryScore).slice(0, 1000).toSet
-
-
+            removeInferior(bs.map(_.mineralState)).map(ms => BlueprintState(blueprint, ms, rs))
+        }
+        .toList
+        .sortBy(-_.arbritraryScore)
+        .slice(0, 1000) // IDK anymore. Seems to reduce the space of states to a manageable size :shrug:
+        .toSet
 
     def run(minutes: Int): BlueprintState =
       def optimizeGeodes(state: BlueprintState): BlueprintState =
-        def rec(remaining: Int, queue: Set[BlueprintState], nextStates: Set[BlueprintState]= Set.empty): Set[BlueprintState] =
+        def rec(remaining: Int, queue: Set[BlueprintState], nextStates: Set[BlueprintState] = Set.empty): Set[BlueprintState] =
           if (remaining == 0) queue
-          else if (queue.isEmpty)
-            rec(remaining - 1, optimize(nextStates))
+          else if (queue.isEmpty) rec(remaining - 1, optimize(nextStates))
           else
             val (current, rest) = queue.head -> queue.tail
-            val addNextStates       = current.minuteStep
+            val addNextStates   = current.minuteStep
             rec(remaining, rest, nextStates ++ addNextStates)
         val states = rec(minutes, Set(state))
         states.toList.maxBy(_.mineralState.geodeDelved)

@@ -35,9 +35,17 @@ lazy val aoc2021 = (project in file("2021"))
     moduleName   := "2021",
     libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
     Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
-  )
+  ).dependsOn(util)
 
 lazy val aoc2022 = (project in file("2022"))
+  .settings(
+    scalaVersion := "3.2.1",
+    moduleName   := "2022",
+    libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
+    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+  ).dependsOn(util)
+
+lazy val util = (project in file("util"))
   .settings(
     scalaVersion := "3.2.1",
     moduleName   := "2022",

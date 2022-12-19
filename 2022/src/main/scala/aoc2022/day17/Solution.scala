@@ -15,7 +15,7 @@ object Solution {
     ZIO.succeed(tetris.groundHeight)
 
   def solvePart2(input: List[Char]): ZIO[Any, Throwable, Long] =
-//    val tetris = Tetris(input).run(1000000000000L)
-    ZIO.succeed(0L)
+    val tetris = Tetris(input).run(1000000000000L)
+    ZIO.succeed(tetris.groundHeight)
 
 }

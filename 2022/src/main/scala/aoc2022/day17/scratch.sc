@@ -3,20 +3,26 @@ val heights = List(0,1,4,6,7,9,10,13,15,17,17,18,21,23,23,25,26,29,32,36,36,37,3
 val lHeights = LazyList.from(heights)
 val lDelta = lHeights.lazyZip(lHeights.tail).map(c => c._2 - c._1)
 
+lDelta.take(100).toList
 
-lDelta.take(40).toList
-val x = LazyList.from(lDelta.sliding(10).map(_.toList))
+def newStart(startPos: Int): Option[(Int, List[Int])] =
+  val lDeltaFrom =lDelta.drop(startPos-1)
+  def loop(len: Int): Option[List[Int]] =
+    if(len > 100) None
+    val checkPattern:List[Int] = lDeltaFrom.take(len).toList
+    val findPattern:List[Int] = lDeltaFrom.drop(len).sliding(len).map(_.toList).find(_ == checkPattern).getOrElse(Nil)
+    if(findPattern.isEmpty) None
+    else if (findPattern ++ findPattern == lDeltaFrom.take(len*2).toList) Some(checkPattern)
+    else loop(len+1)
+  loop(10) match
+    case Some(pattern) => Some(startPos, pattern)
+    case None => newStart(startPos+1)
 
 
 
 
-x.take(10).toList
-lDelta.take(1).toList
-lDelta.take(1).tail.toList
 
-
-val i = lDelta.head
-
+newStart(1)
 //def doCheck(searchOffset: Int): List[Int] = {
 //  println(searchOffset)
 //  val offset       = lDelta.zipWithIndex.drop(searchOffset).find(c => c._1 == i).get._2

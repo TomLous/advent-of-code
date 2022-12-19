@@ -123,50 +123,39 @@ object model {
       }
 
     def run(numRocks: Long): Tetris = {
-//      val (rockNum, resultMatrix, remaining, height) = LazyList.iterate((0L, initMatrix, jetStream, 0L)) { case (matrix, input, rockNum, _) =>
-//        loop(matrix, input, rockNum)
-//      }.
+      val maxTry = 4000
+      val lazyList = LazyList.iterate((0L, initMatrix, jetStream, 0L)) { case (matrix, input, rockNum, _) => loop(matrix, input, rockNum)}
+      val heights = lazyList.map(_._4)
+      val heightDeltas = heights.lazyZip(heights.tail).map(c => c._2 - c._1).take(maxTry).toList
+
+      def findPattern(startPos: Int): (Int, List[Long]) =
+        if(startPos > maxTry) throw Exception("No loop found")
+        val heightDeltasFrom = heightDeltas.drop(startPos-1).toList
+
+        def loop(len: Int): Option[List[Long]] =
+          if(len + startPos > maxTry) None
+          val checkPattern = heightDeltasFrom.take(len).toList
+          val findPatternAgain = heightDeltasFrom.drop(len).sliding(len).map(_.toList).find(_ == checkPattern).getOrElse(Nil)
+          if(findPatternAgain.isEmpty) None
+          else if (findPatternAgain ++ findPatternAgain == heightDeltasFrom.take(len*2).toList) Some(checkPattern)
+          else loop(len+1)
+        loop(10) match
+          case Some(pattern) => (startPos, pattern)
+          case None => findPattern(startPos+1)
+
+      val (startPos, pattern) = findPattern(1)
 
 
-      val tryNum = 1000
-
-      val deltas = LazyList.iterate((0L, initMatrix, jetStream, 0L)) { case (matrix, input, rockNum, _) =>
-            loop(matrix, input, rockNum)
-          }
-        .map(_._4)
-        .sliding(2)
-        .map{
-          case LazyList(a, b) => b - a
-        }
+      val start = heightDeltas.take(startPos-1).toList
 
 
-
-      println("---")
-      deltas.take(tryNum).toList.foreach(println)
-
-//            case ((deltas, pattern), delta) =>
-//               val newDeltas = delta :: deltas
-//
-//
-//               if(newDeltas.length > 10){
-//                 for{
-//                   s <- 1 until newDeltas.length / 2
-//                   subset <- newDeltas.slice(0, s)
-//                   if newDeltas.slice(subset).contains(subset)
-//
-//               }
-//
-//        }
-//      }
-
-
-
-
-//      l.foreach(println)
-
-
-      Tetris(jetStream, initMatrix, 0L)
-//      Tetris(remaining, resultMatrix, height)
+      val l1 = (numRocks - startPos)
+      val factor = l1 / pattern.length
+      val rest = l1 % pattern.length
+      val end = pattern.take(rest.toInt +1)
+      val result = start.sum + (pattern.sum * factor) + end.sum
+      
+      Tetris(jetStream, initMatrix, result)
     }
 
     def matrixToString(m: DenseMatrix[Int], maxRows: Option[Int] = None): String =

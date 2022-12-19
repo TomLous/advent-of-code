@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 
 object model {
 
-  case class Tetris(jetStream: List[Char], initMatrix: DenseMatrix[Int] = DenseMatrix.zeros[Int](0, 7)) {
+  case class Tetris(jetStream: List[Char], initMatrix: DenseMatrix[Int] = DenseMatrix.zeros[Int](0, 7), groundHeight:Long=0) {
     private lazy val width             = initMatrix.cols
     private val shapeAppearAboveGround = 3
     private val shapeAppearFromLeft    = 2
@@ -35,23 +35,25 @@ object model {
         (1, 1)
       )
     )
-    
-    lazy val groundHeight: Int = initMatrix.rows - initMatrix.findAll(_ == 2).map(_._1).minOption.getOrElse(0)
+
+    def towerHeight(matrix: DenseMatrix[Int]): Long  =
+      matrix(*, ::).foldLeft(matrix.rows){
+        case (height, row) if row.forall(_ == 0) => height - 1
+        case (height, _) => height
+      }
+
+
+    def topFilledRow(matrix: DenseMatrix[Int]): Int =
+      matrix.findAll(_ == 2).map(_._1).minOption.getOrElse(matrix.rows)
+
+//    lazy val groundHeight: Long = (initMatrix.rows - initMatrix.findAll(_ == 2).map(_._1).minOption.getOrElse(0)).toLong
 
     def addShape(matrix: DenseMatrix[Int], shape: DenseMatrix[Int]): DenseMatrix[Int] = {
-      val shapeHeight = shape.rows
-//      println("shapeHeight: " + shapeHeight)
-      val groundRowInMatrix = matrix.findAll(_ == 2).map(_._1).minOption.getOrElse(0)
-//      println("groundRowInMatrix: " + groundRowInMatrix)
-      val groundHeight = matrix.rows - groundRowInMatrix
-//      println("groundHeight: " + groundHeight)
-      val newHeight = shapeHeight + shapeAppearAboveGround + groundHeight
-//      println("newHeight: " + newHeight)
-      val newMatrix = DenseMatrix.zeros[Int](newHeight, matrix.cols)
-//      println(s"matrix rows: ${matrix.rows}, cols: ${matrix.cols}")
-//      println(s"newmatrix rows: ${newMatrix.rows}, cols: ${newMatrix.cols}")
-//      println(s"matrix rows to get ${groundHeight until matrix.rows}")
-//      println(s"newmatix rows to paste ${newMatrix.rows - groundHeight until newMatrix.rows}")
+      val shapeHeight       = shape.rows
+      val groundRowInMatrix = topFilledRow(matrix)
+      val groundHeight      = matrix.rows - groundRowInMatrix
+      val newHeight         = shapeHeight + shapeAppearAboveGround + groundHeight
+      val newMatrix         = DenseMatrix.zeros[Int](newHeight, matrix.cols)
       newMatrix(newMatrix.rows - groundHeight until newMatrix.rows, 0 until width)              := matrix(groundRowInMatrix until matrix.rows, ::)
       newMatrix(0 until shape.rows, shapeAppearFromLeft until shape.cols + shapeAppearFromLeft) := shape
       newMatrix
@@ -99,29 +101,77 @@ object model {
 
     @tailrec
     private def step(matrix: DenseMatrix[Int], instructions: List[Char]): (DenseMatrix[Int], List[Char]) = {
-      val endlessInstructions = if instructions.isEmpty then jetStream else instructions
+      val endlessInstructions    = if instructions.isEmpty then jetStream else instructions
       val (newMatrix, movedDown) = moveShape(followInstruction(matrix, endlessInstructions.head), 1)
       if (!movedDown) (matrix, endlessInstructions.tail)
       else step(newMatrix, endlessInstructions.tail)
     }
 
-    def run(numRocks: Int): Tetris = {
-      val (resMatrix, inp) = (0 until numRocks).foldLeft((initMatrix, jetStream)) { case ((matrix, input), rockNum) =>
-        val matrixWithShape = addShape(matrix, shapes(rockNum % shapes.length))
-        val (movedMatrix, newInput) = step(matrixWithShape, input)
-        val rested                  = restMatrix(movedMatrix)
+    def loop(rockNum: Long, matrix: DenseMatrix[Int], input: List[Char]): (Long, DenseMatrix[Int], List[Char], Long) =
+      val matrixWithShape         = addShape(matrix, shapes((rockNum % shapes.length).toInt))
+      val (movedMatrix, newInput) = step(matrixWithShape, input)
+      val restedMatrix = restMatrix(movedMatrix)
+      val height = towerHeight(restedMatrix)
+      (rockNum+1, restedMatrix, newInput, height)
 
-//        println(matrixToString(rested))
-        (rested, newInput)
+    def recurse(matrix: DenseMatrix[Int], input: List[Char], rockNum: Long, max: Long, height: Long=0): (DenseMatrix[Int], List[Char], Long) =
+      if (rockNum == max) {
+        (matrix, input, height)
+      } else {
+        val (newRocknum, newMatrix, newInput, newHeight) = loop(rockNum, matrix, input)
+        recurse(newMatrix, newInput, newRocknum, max, newHeight)
       }
 
-      Tetris(inp, resMatrix)
+    def run(numRocks: Long): Tetris = {
+//      val (rockNum, resultMatrix, remaining, height) = LazyList.iterate((0L, initMatrix, jetStream, 0L)) { case (matrix, input, rockNum, _) =>
+//        loop(matrix, input, rockNum)
+//      }.
+
+
+      val tryNum = 1000
+
+      val deltas = LazyList.iterate((0L, initMatrix, jetStream, 0L)) { case (matrix, input, rockNum, _) =>
+            loop(matrix, input, rockNum)
+          }
+        .map(_._4)
+        .sliding(2)
+        .map{
+          case LazyList(a, b) => b - a
+        }
+
+
+
+      println("---")
+      deltas.take(tryNum).toList.foreach(println)
+
+//            case ((deltas, pattern), delta) =>
+//               val newDeltas = delta :: deltas
+//
+//
+//               if(newDeltas.length > 10){
+//                 for{
+//                   s <- 1 until newDeltas.length / 2
+//                   subset <- newDeltas.slice(0, s)
+//                   if newDeltas.slice(subset).contains(subset)
+//
+//               }
+//
+//        }
+//      }
+
+
+
+
+//      l.foreach(println)
+
+
+      Tetris(jetStream, initMatrix, 0L)
+//      Tetris(remaining, resultMatrix, height)
     }
 
-
-    def matrixToString(m: DenseMatrix[Int]): String =
+    def matrixToString(m: DenseMatrix[Int], maxRows: Option[Int] = None): String =
       "━".repeat(m.cols) + "\n" +
-        ((0 until m.rows)
+        ((0 until maxRows.map(_ min m.rows).getOrElse(m.rows))
           .map { row =>
             (0 until m.cols).map { col =>
               val v = m(row, col)

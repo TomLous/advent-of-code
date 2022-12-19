@@ -12,12 +12,10 @@ object Solution {
 
   def solvePart1(input: List[Char]): ZIO[Any, Throwable, Long] =
     val tetris = Tetris(input).run(2022)
-//    println(tetris)
-
     ZIO.succeed(tetris.groundHeight)
 
   def solvePart2(input: List[Char]): ZIO[Any, Throwable, Long] =
-    // TODO: implement
+//    val tetris = Tetris(input).run(1000000000000L)
     ZIO.succeed(0L)
 
 }

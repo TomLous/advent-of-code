@@ -4,7 +4,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "advent-of-code"
   )
-  .aggregate(aoc2021, aoc2022)
+  .aggregate(aoc2020, aoc2021, aoc2022)
 
 lazy val zio2Libs = Seq(
   "dev.zio"     %% "zio"               % "2.0.4",
@@ -28,6 +28,14 @@ lazy val graphLibs = Seq(
 lazy val parallelLibs = Seq(
   "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4"
 )
+
+lazy val aoc2020 = (project in file("2020"))
+  .settings(
+    scalaVersion := "3.2.1",
+    moduleName   := "2020",
+    libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
+    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+  ).dependsOn(util)
 
 lazy val aoc2021 = (project in file("2021"))
   .settings(

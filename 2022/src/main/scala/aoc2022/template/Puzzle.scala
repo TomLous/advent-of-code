@@ -19,6 +19,6 @@ object Puzzle extends ZIOAppDefault {
     _         <- Solution.solvePart2(data).timed.flatMap(logging("Result of the puzzle in part 2: ", appendOutput = true))
   } yield ()
 
-  override def run: ZIO[Any, Any, Any] = program.timed.flatMap(logging("Completed year [year] day [day]")).exitCode
+  override def run: ZIO[Any, Any, Any] = program.timed.flatMap(logging("Completed year [year] day [day]"))
 
 }

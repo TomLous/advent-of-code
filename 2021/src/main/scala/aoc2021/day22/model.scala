@@ -47,8 +47,7 @@ object model {
       val filteredSteps =  rebootSteps.map(_.stepInRange(range))
       val (sum, _) = filteredSteps.foldLeft((0L, List.empty[RebootStep])) {
         case ((totalCubesOn, oldSteps), currentStep) =>
-          oldSteps.foldLeft()
-
+         ???
 
 
 

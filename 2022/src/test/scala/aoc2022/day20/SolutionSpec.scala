@@ -21,7 +21,7 @@ object SolutionSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Throwable] = suite(s"$prefix Solution")(
     test("part 1 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 3L
+      val expectedOutput:BigInt = 3
 
       for {
         data    <- Solution.parseInput(input)
@@ -31,7 +31,7 @@ object SolutionSpec extends ZIOSpecDefault {
     },
     test("part 2 - example 1") {
       val input          = ZStream.fromIterable(sampleData.split("\n"))
-      val expectedOutput = 1623178306L
+      val expectedOutput:BigInt = 1623178306
 
       for {
         data    <- Solution.parseInput(input)

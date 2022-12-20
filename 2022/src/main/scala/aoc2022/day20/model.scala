@@ -3,10 +3,10 @@ package aoc2022.day20
 import scala.collection.mutable.ListBuffer
 
 object model {
-  case class Decrypt(input: List[Int], key: Long = 1L, mixin: Int = 1):
-    lazy val inputMapped: List[(Long, Int)] = input.map(_.toLong * key).zipWithIndex
+  case class Decrypt(input: List[BigInt], key: BigInt = 1, mixin: Int = 1):
+    lazy val inputMapped: List[(BigInt, Int)] = input.map(_ * key).zipWithIndex
 
-    lazy val decryptedMapped: List[(Long, Int)] = (0 until mixin)
+    lazy val decryptedMapped: List[(BigInt, Int)] = (0 until mixin)
       .foldLeft(inputMapped.toBuffer) { case (premixed, _) =>
         inputMapped.foldLeft(premixed) { case (newBuffer, tuple) =>
           val move         = tuple._1
@@ -20,13 +20,13 @@ object model {
       }
       .toList
 
-    lazy val decrypted: List[Long] = decryptedMapped.map(_._1)
+    lazy val decrypted: List[BigInt] = decryptedMapped.map(_._1)
 
-    def groveCoordinates(nums: List[Int]): List[Long] =
-      val index0 = decrypted.indexOf(0L)
-      def getNumAt(index: Int): Long =
+    def groveCoordinates(nums: List[Int]): List[BigInt] =
+      val index0 = decrypted.indexOf(0)
+      def getNumAt(index: Int): BigInt =
         val newIndex = (index + index0) % decrypted.length
-        decrypted(newIndex.toInt)
+        decrypted(newIndex)
       nums.map(getNumAt)
 
 }

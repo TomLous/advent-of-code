@@ -14,7 +14,7 @@ object SolutionSpec extends ZIOSpecDefault {
       |""".stripMargin
 
   def spec: Spec[Any, Throwable] = suite(s"$prefix Solution")(
-    test("part 1 - example 1") {
+    test(s"$prefix - part 1 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
       val expectedOutput: BigInt = 0
 
@@ -24,7 +24,7 @@ object SolutionSpec extends ZIOSpecDefault {
         output1 <- Solution.solvePart1(data)
       } yield assertTrue(output1 == expectedOutput)
     },
-    test("part 2 - example 1") {
+    test(s"$prefix - part 2 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
       val expectedOutput: BigInt = 0
 

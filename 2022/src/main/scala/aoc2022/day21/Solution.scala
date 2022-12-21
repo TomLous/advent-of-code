@@ -18,11 +18,9 @@ object Solution {
       .map(MonkeyMath.apply)
 
   def solvePart1(input: MonkeyMath): ZIO[Any, Throwable, BigInt] =
-   
     ZIO.succeed(input.monkeyValueRoot)
 
   def solvePart2(input: MonkeyMath): ZIO[Any, Throwable, BigInt] =
-    // TODO: implement
     ZIO.succeed(input.monkeyValueHuman)
 
 }

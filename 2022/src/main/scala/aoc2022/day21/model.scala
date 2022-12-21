@@ -13,6 +13,8 @@ object model {
   case class Op(value: String, f: BigInt=> BigInt)
 
 
+  object X extends Op("x", identity)
+
   object Op:
     def add(x: Op | BigInt, y: Op | BigInt): Op | BigInt = (x, y) match
         case (x:Op, y:Op) => Op(s"(${x.value} + ${y.value})", x.f andThen y.f)
@@ -37,6 +39,9 @@ object model {
             newX + y
           ))
         case (x:BigInt, y:BigInt) => x - y
+     // action (x,y) => x - y
+     // newY => reverseR(x) => x - newY
+     // reverseL(y)(newX) => newxX + y
 
     def mult(x: Op | BigInt, y: Op | BigInt): Op | BigInt = (x, y) match
         case (x:Op, y:Op) => Op(s"(${x.value} * ${y.value})", x.f andThen y.f)
@@ -72,6 +77,26 @@ object model {
           x.f(y)
         case (x:BigInt, y:BigInt) => throw new Exception(s"No solution found $x $y")
 
+    def action(x: Op | BigInt, y: Op | BigInt, opChar: Char, action: BigInt => BigInt => BigInt, reverseL:  BigInt => BigInt => BigInt, reverseR:  BigInt => BigInt => BigInt): Op | BigInt = (x, y) match
+        case (x:Op, y:Op) => Op(s"(${x.value} $opChar ${y.value})", x.f andThen y.f)
+        case (x:BigInt, y:Op) => Op(s"($x $opChar ${y.value})", y.f compose reverseR(x))
+        case (x:Op, y:BigInt) => Op(s"(${x.value} + $y)" , x.f compose reverseL(y))
+        case (x:BigInt, y:BigInt) => action(x)(y)
+
+
+  def add: BigInt => BigInt => BigInt = x => y => x + y
+  def mult: BigInt => BigInt => BigInt = x => y => x * y
+  def subL: BigInt => BigInt => BigInt = x => y => x - y
+  def subR: BigInt => BigInt => BigInt = x => y => y - x
+  def divL: BigInt => BigInt => BigInt = x => y => x / y
+  def divR: BigInt => BigInt => BigInt = x => y => y / x
+
+  extension (opOrBigInt: Op | BigInt)
+    def +(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, opChar='+', add, subR, subL)
+    def -(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, opChar='-', subL, add, subL)
+    def *(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, opChar='*', mult, divR, divR)
+    def /(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, opChar='/', divL, mult, mult)
+    def <>(other: Op | BigInt):Op | BigInt =  Op.findSolution(opOrBigInt, other)
 
 
 
@@ -105,20 +130,17 @@ object model {
         .appended(rootOp)
 
 
-
-
       def rec(currentMonkey: Monkey):Op | BigInt =
         newInput.find(_.monkey == currentMonkey) match
           case Some(MonkeyNumber(_, num)) => num
           case Some(MonkeyOp(_, a, b, op)) =>
             op match
-              case '+' => Op.add(rec(a),rec(b))
-              case '*' => Op.mult(rec(a),rec(b))
-              case '-' => Op.sub(rec(a),rec(b))
-              case '/' => Op.div(rec(a),rec(b))
-              case '=' => Op.findSolution(rec(a),rec(b))
-          case None =>
-            Op("x",  identity)
+              case '+' => rec(a) + rec(b)
+              case '*' => rec(a) * rec(b)
+              case '-' => rec(a) - rec(b)
+              case '/' => rec(a) / rec(b)
+              case '=' => rec(a) <> rec(b)
+          case None => X // human was removed from input => `x` is the human value to be computed
 
       rec(Monkey("root")) match
         case b: BigInt => b

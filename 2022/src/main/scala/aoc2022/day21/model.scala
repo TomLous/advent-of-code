@@ -20,46 +20,47 @@ object model {
           case '/' => f(monkeyA) / f(monkeyB)
           case '=' => f(monkeyA) <> f(monkeyB)
 
-  case class Op(f: BigInt=> BigInt)
-  object X extends Op(identity)
+  type Op = BigInt => BigInt
+  case object X extends Op:
+    def apply(x: BigInt): BigInt = x
 
   object Op:
     def findSolution(x: Op | BigInt, y: Op | BigInt): Op | BigInt = (x, y) match
-        case (x:BigInt, y:Op) => y.f(x)
-        case (x:Op, y:BigInt) => x.f(y)
+        case (x:BigInt, y:Op) => y(x)
+        case (x:Op, y:BigInt) => x(y)
         case (x:BigInt, y:BigInt) if x == y => x
         case (x:Op, y:Op) => throw new Exception(s"No solution found $x = $y")
         case (x:BigInt, y:BigInt) => throw new Exception(s"No solution found $x != $y")
 
     def action(x: Op | BigInt, y: Op | BigInt, action: BigInt => BigInt => BigInt, reverseL:  BigInt => BigInt => BigInt, reverseR:  BigInt => BigInt => BigInt): Op | BigInt = (x, y) match
-        case (x:Op, y:Op) => Op(x.f andThen y.f)
-        case (x:BigInt, y:Op) => Op(y.f compose reverseR(x))
-        case (x:Op, y:BigInt) => Op(x.f compose reverseL(y))
+        case (x:Op, y:Op) => x andThen y
+        case (x:BigInt, y:Op) => y compose reverseR(x)
+        case (x:Op, y:BigInt) => x compose reverseL(y)
         case (x:BigInt, y:BigInt) => action(x)(y)
 
-    def add: BigInt => BigInt => BigInt = x => y => x + y
-    def mult: BigInt => BigInt => BigInt = x => y => x * y
-    def subL: BigInt => BigInt => BigInt = x => y => x - y
-    def subR: BigInt => BigInt => BigInt = x => y => y - x
-    def divL: BigInt => BigInt => BigInt = x => y => x / y
-    def divR: BigInt => BigInt => BigInt = x => y => y / x
+  def add: BigInt => BigInt => BigInt = x => y => x + y
+  def mult: BigInt => BigInt => BigInt = x => y => x * y
+  def subL: BigInt => BigInt => BigInt = x => y => x - y
+  def subR: BigInt => BigInt => BigInt = x => y => y - x
+  def divL: BigInt => BigInt => BigInt = x => y => x / y
+  def divR: BigInt => BigInt => BigInt = x => y => y / x
 
-    extension (opOrBigInt: Op | BigInt)
-      def +(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, add, subR, subR)
-      def -(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, subL, add, subL)
-      def *(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, mult, divR, divR)
-      def /(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, divL, mult, divL)
-      def <>(other: Op | BigInt):Op | BigInt =  Op.findSolution(opOrBigInt, other)
+  extension (opOrBigInt: Op | BigInt)
+    def +(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, add, subR, subR)
+    def -(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, subL, add, subL)
+    def *(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, mult, divR, divR)
+    def /(other: Op | BigInt):Op | BigInt =  Op.action(opOrBigInt, other, divL, mult, divL)
+    def <>(other: Op | BigInt):Op | BigInt =  Op.findSolution(opOrBigInt, other)
 
 
 
 
   case class MonkeyMath(input: List[Input]):
 
-    def rec(currentMonkey: Monkey):Op | BigInt =
+    private def rec(currentMonkey: Monkey):Op | BigInt =
       input.find(_.monkey == currentMonkey) match
         case Some(m) => m.eval(rec)
-        case None => X
+        case None => X //  this will be the unknown variable (humn)
 
     lazy val monkeyValueRoot: BigInt =
       rec(Monkey("root")) match

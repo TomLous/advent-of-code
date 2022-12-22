@@ -7,14 +7,14 @@ import zio.test.*
 
 object SolutionSpec extends ZIOSpecDefault {
 
-  val prefix = "AoC 2022 - Day [day]"
+  val prefix = "AoC [year] - Day [day]"
 
   private val sampleData1: String =
     """
       |""".stripMargin
 
   def spec: Spec[Any, Throwable] = suite(s"$prefix Solution")(
-    test(s"$prefix - part 1 - example 1") {
+    test("AoC [year] - Day [day] - part 1 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
       val expectedOutput: BigInt = 0
 
@@ -24,7 +24,7 @@ object SolutionSpec extends ZIOSpecDefault {
         output1 <- Solution.solvePart1(data)
       } yield assertTrue(output1 == expectedOutput)
     },
-    test(s"$prefix - part 2 - example 1") {
+    test("AoC [year] - Day [day] - part 2 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
       val expectedOutput: BigInt = 0
 

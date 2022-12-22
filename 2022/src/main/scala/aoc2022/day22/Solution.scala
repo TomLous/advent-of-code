@@ -21,15 +21,13 @@ object Solution {
       .map(GameBoard.apply)
 
   def solvePart1(input: GameBoard): ZIO[Any, Throwable, BigInt] =
-    val (pos, orientation) = input.runPart1
-
-    val score = (pos.row + 1) * 1000 + (pos.col + 1) * 4 + orientation.x
-
-
+    val (point, orientation) = input.wrapAround.runCommands
+    val score = point.score + orientation.score
     ZIO.succeed(score)
 
   def solvePart2(input: GameBoard): ZIO[Any, Throwable, BigInt] =
-    // TODO: implement
-    ZIO.succeed(0)
+    val (point, orientation) = input.wrapCube.runCommands
+    val score = point.score + orientation.score
+    ZIO.succeed(score)
 
 }

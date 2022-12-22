@@ -1,241 +1,219 @@
 package aoc2022.day22
 
+import breeze.linalg.*
+import geometry.Pos2
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.*
 import scalax.collection.GraphPredef.*
 import scalax.collection.GraphTraversal.Visitor
-import scalax.collection.edge.Implicits.*
 import scalax.collection.edge.*
-import breeze.linalg.*
-import geometry.Pos2
+import scalax.collection.edge.Implicits.*
+import scalax.collection.mutable.Graph as MGraph
 
 import scala.annotation.tailrec
 
 object model {
 
-  trait Point
-  case class Valid(x: BigInt, y: BigInt) extends Point
-  case class Wall(x: BigInt, y: BigInt) extends Point
+  trait Point:
+    def col: BigInt
+    def row: BigInt
+
+  case class Valid(row: BigInt, col: BigInt) extends Point:
+    def score: BigInt = ((row) * 1000) + ((col) * 4)
+
+  case class Wall(row: BigInt, col: BigInt)                                           extends Point
+  case class Empty(row: BigInt, col: BigInt)                                          extends Point
+  case class Border(row: BigInt, col: BigInt,  valid: Valid, orientation: Orientation) extends Point
 
   enum Direction:
     case Left, Right
 
-  enum Orientation(val pos: Pos2, val x: Int):
-    case Up extends Orientation(Pos2(0, -1), 3)
-    case Down extends Orientation(Pos2(0, 1), 1)
-    case Left extends Orientation(Pos2(-1, 0), 2)
-    case Right extends Orientation(Pos2(1, 0), 0)
+  enum Orientation(val score: BigInt):
+    def turn(direction: Direction): Orientation =
+      if (direction == Direction.Left) this match
+        case Up    => Left
+        case Down  => Right
+        case Left  => Down
+        case Right => Up
+      else
+        this match
+          case Up    => Right
+          case Down  => Left
+          case Left  => Up
+          case Right => Down
+
+    def reverse: Orientation = this match
+      case Up    => Down
+      case Down  => Up
+      case Left  => Right
+      case Right => Left
+
+    case Up    extends Orientation(3)
+    case Down  extends Orientation(1)
+    case Left  extends Orientation(2)
+    case Right extends Orientation(0)
+
+  type ValidEdge = LDiEdge[Valid] & EdgeCopy[LDiEdge] { type L1 = (Orientation, Orientation => Orientation)  & Product }
+
+  trait Command
+  case class Move(steps: BigInt)    extends Command
+  case class Turn(steps: Direction) extends Command
+
+  case class GameBoard(commands: List[Command], nodes: List[Point], graph: Graph[Valid, LDiEdge]):
+
+    lazy val wrapCube: GameBoard =
+      val borders = nodes.collect { case b: Border => b }
+
+      borders.groupBy(b => (b.row, b.col)).values.filter(_.length > 1).foreach(println)
+
+      GameBoard(commands,  nodes, graph)
 
 
-  case class Command(command: Direction, steps: BigInt)
 
+    lazy val wrapAround: GameBoard =
+      val borders = nodes.collect { case b: Border => b }
 
-  case class GameBoard(commands: List[Command], fieldGrid: DenseMatrix[Int]):
-
-    def matrixToString(m: DenseMatrix[Int], steps:Map[Int, (Pos2, Orientation)]): String =
-      val lfind = steps.map{
-        case (step, (pos, orientation)) =>
-          (pos.row, pos.col) -> (step, orientation)
-      }.toMap
-
-      (0 until m.rows)
-        .map { row =>
-          (0 until m.cols).map { col =>
-            val value = m(row, col)
-            if(lfind.contains((row, col)))
-              lfind((row, col))._1.toString
-//              lfind((row, col))._2 match
-//                case Orientation.Up => "^"
-//                case Orientation.Down => "v"
-//                case Orientation.Left => "<"
-//                case Orientation.Right => ">"
-            else if value == 2 then "█"
-            else if value == 1 then "."
-            else " "
-          }.mkString
+      val borderEdges: List[ValidEdge] = borders
+        .flatMap {
+          case border if border.orientation == Orientation.Up || border.orientation == Orientation.Down =>
+            borders.find(b => b.orientation == border.orientation.reverse && b.valid.col == border.valid.col).map(b => (border, b))
+          case border if border.orientation == Orientation.Left || border.orientation == Orientation.Right =>
+            borders.find(b => b.orientation == border.orientation.reverse && b.valid.row == border.valid.row).map(b => (border, b))
         }
-        .mkString("\n"
-        )
+        .flatMap { case (b1, b2) =>
+          List(
+            (b1.valid ~+> b2.valid)(b2.orientation, GameBoard.borderIdentity),
+            (b2.valid ~+> b1.valid)(b1.orientation, GameBoard.borderIdentity)
+          )
+        }
+        .distinct
 
-    def move(point: Pos2, orientation: Orientation, steps: BigInt): Pos2 =
+      GameBoard(commands,  nodes, graph ++ borderEdges)
+
+    private def node(valid: Valid): graph.NodeT = graph get valid
+
+    private def move(node: graph.NodeT, steps: BigInt, orientation: Orientation): (graph.NodeT, Orientation) =
       @tailrec
-      def next(stepsRemaining: BigInt, currentPoint: Pos2):Pos2 =
-        if(stepsRemaining == 0) currentPoint
+      def step(currentNode: graph.NodeT, currentOrientation: Orientation, stepsRemaining: Int): (graph.NodeT, Orientation) =
+        if stepsRemaining == 0 then (currentNode, currentOrientation)
         else
-          val nextPoint = currentPoint + orientation.pos
-          if(nextPoint.row >= fieldGrid.rows || nextPoint.col >= fieldGrid.cols || nextPoint.row < 0 || nextPoint.col < 0 || fieldGrid(nextPoint.row, nextPoint.col) == 0)
-            val nextPos = orientation match {
-                case Orientation.Up =>
-                  fieldGrid(::, currentPoint.col).t.inner.toArray.toList.zipWithIndex.findLast(_._1 > 0).map(_._2).map(Pos2(currentPoint.col, _))
-                case Orientation.Down =>
-                  fieldGrid(::, currentPoint.col).t.inner.toArray.toList.zipWithIndex.find(_._1 > 0).map(_._2).map(Pos2(currentPoint.col, _))
-                case Orientation.Left =>
-                  fieldGrid(currentPoint.row, ::).inner.toArray.toList.zipWithIndex.findLast(_._1 > 0).map(_._2).map(Pos2(_, currentPoint.row))
-                case Orientation.Right =>
-                  fieldGrid(currentPoint.row, ::).inner.toArray.toList.zipWithIndex.find(_._1 > 0).map(_._2).map(Pos2(_, currentPoint.row))
-            }
+          currentNode.outgoing.find(_.label match {
+            case (o, _) => o == currentOrientation
+          }).map(e => (e.to, e.label)) match
+            case Some((nextNode, lab:(Orientation, Orientation => Orientation))) =>
+              val orientationF = lab._2
+              step(nextNode, orientationF(currentOrientation), stepsRemaining - 1)
+            case None => (currentNode, currentOrientation)
 
+      step(node, orientation, steps.toInt)
 
-
-//            println(s"m: ${fieldGrid.rows} x ${fieldGrid.cols}")
-//            println(s"orientation: $orientation")
-//            println(s"currentPoint: $currentPoint")
-//            println(s"nextPoint: $nextPoint")
-//            println(s"np: $nextPos")
-//            System.exit(1)
-
-
-
-            val wrappedPoint = nextPos.get
-
-            if(fieldGrid(wrappedPoint.row, wrappedPoint.col) == 2) currentPoint
-            else next(stepsRemaining - 1, wrappedPoint)
-          else if(fieldGrid(nextPoint.row, nextPoint.col) == 2) currentPoint // hit a wall
-          else next(stepsRemaining - 1, nextPoint)
-
-
-
-      next(steps, point)
-
-
-
-
-
-
-
-
-    lazy val runPart1: (Pos2, Orientation) = {
-      val startFrom = Pos2(fieldGrid(0, ::).inner.toArray.indexOf(1), 0)
-
-
+    lazy val runCommands: (Valid, Orientation) = {
+      val start = nodes.collectFirst({ case v: Valid => v }).get // nodes are sorted so this is the first valid node
       @tailrec
-      def step(remainingCommands: List[Command], currentPoint: Pos2, currentOrientation: Orientation , stepcnt: Int, steps: Map[Int, (Pos2, Orientation)]): (Pos2, Orientation, Map[Int, (Pos2, Orientation)]) =  remainingCommands match
-        case Nil => (currentPoint, currentOrientation, steps)
-        case headCommand :: tailCommands =>
-          println(s"----")
-          println(s"step: $stepcnt")
-          println(s"cp: $currentPoint")
-          println(s"or: $currentOrientation")
-          println(s"take ${headCommand.steps} then turn ${headCommand.command}")
-          val newPoint = move(currentPoint, currentOrientation, headCommand.steps)
-          val newOrientation = headCommand.command match
-            case Direction.Left => currentOrientation match
-              case Orientation.Up => Orientation.Left
-              case Orientation.Down => Orientation.Right
-              case Orientation.Left => Orientation.Down
-              case Orientation.Right => Orientation.Up
-            case Direction.Right => currentOrientation match
-              case Orientation.Up => Orientation.Right
-              case Orientation.Down => Orientation.Left
-              case Orientation.Left => Orientation.Up
-              case Orientation.Right => Orientation.Down
-          println(s"newPoint: $newPoint")
+      def followCommands(commandList: List[Command], currentNode: graph.NodeT, currentOrientation: Orientation): (Valid, Orientation) = commandList match {
+        case Nil => (currentNode.value, currentOrientation)
+        case Move(steps) :: remainingCommands =>
+          val (nextNode, nextOrientation) = move(currentNode, steps, currentOrientation)
+          followCommands(remainingCommands, nextNode, nextOrientation)
+        case Turn(direction) :: remainingCommands =>
+          followCommands(remainingCommands, currentNode, currentOrientation.turn(direction))
+      }
 
-          val x = steps + (stepcnt -> (newPoint, newOrientation))
-//          if(stepcnt == 9)
-//            println(matrixToString(fieldGrid, x))
-//            throw new Exception("stop")
-
-          step(tailCommands,  newPoint, newOrientation, stepcnt+1, x)
-
-
-      val (pos, or, steps) = step(commands, startFrom, Orientation.Right, 0,  Map(0 -> (startFrom, Orientation.Right)))
-
-
-
-      (pos, or)
+      followCommands(commands, node(start), Orientation.Right)
     }
 
-
   object GameBoard:
-    def parseCommands(str: String): List[Command] =
-      val pattern = """(\d*)([LR])""".r
-      pattern.findAllIn(str).matchData.map { m =>
-        val steps = m.group(1).toInt
-        val command = m.group(2) match
-          case "L" => Direction.Left
-          case "R" => Direction.Right
-        Command(command, steps)
-      }.toList
+    val borderIdentity: Orientation => Orientation = a =>  a
 
+    private def parseCommands(str: String): List[Command] =
+      """(\d+|[LR])""".r
+        .findAllIn(str)
+        .matchData
+        .map(_.group(1) match
+          case "L" => Turn(Direction.Left)
+          case "R" => Turn(Direction.Right)
+          case s   => Move(s.toInt)
+        )
+        .toList
 
-    def apply(input: List[String]): GameBoard =
+    def apply(input: List[String]): GameBoard = {
       val commands = parseCommands(input.last)
 
-      val field = input.dropRight(2)
-      val maxWidth = field.map(_.length).max
-      val field2 = field.map(_.padTo(maxWidth, ' ').toCharArray.map {
-        case ' ' => 0
-        case '#' => 2
-        case '.' => 1
-      })
+      val field    = input.init
+      val maxWidth = field.map(_.length).max + 2 // add border around for easier processing + border detection
 
-      val m = DenseMatrix(field2: _*)
+      def getPoint(char: Char, row: BigInt, col: BigInt): Point =
+        if (char == '.') Valid(row, col)
+        else if (char == '#') Wall(row, col)
+        else Empty(row, col) // used only for border detection
 
-//      field2.foreach(println)
-//      println(m)
+      def makeEdges(from: Point, to: Point, orientation: Orientation) =
+        (from, to) match {
+          case (cp: Valid, pr: Valid) =>
+            List(
+              (cp ~+> pr)(orientation, borderIdentity),
+              (pr ~+> cp)(orientation.reverse, borderIdentity)
+            )
+          case _ => Nil
+        }
 
-      GameBoard(commands, m)
+      def makeBorder(from: Point, to: Point, orientation: Orientation) =
+        (from, to) match {
+          case (e: Empty, p: Valid) => Some(Border(e.row, e.col, p, orientation))
+          case (p: Valid, e: Empty) => Some(Border(e.row, e.col, p, orientation.reverse))
+          case _                    => None
+        }
 
+      var faceNum = 0
+      val (nodeSeq, edgeSeq) = (" " :: field)
+        .map(" " + _) //prefix empty
+        .map(_.padTo(maxWidth, ' ').toCharArray.toList) // pad to max width with spaces
+        .zipWithIndex
+        .sliding(2)
+        .map { case List((currentRow, currentRowIdx), (nextRow, nextRowIdx)) =>
+          val (rowPoints, rowEdges) = currentRow.zipWithIndex
+            .sliding(2)
+            .toList
+            .map { case List((currentChar, currentColIdx), (nextChar, nextColIdx)) =>
+              val currentPoint = getPoint(currentChar, currentRowIdx, currentColIdx)
+              val pointR       = getPoint(nextChar, currentRowIdx, nextColIdx)
+              val pointD       = getPoint(nextRow(currentColIdx), nextRowIdx, currentColIdx)
+              val pointRD      = getPoint(nextRow(nextColIdx), nextRowIdx, nextColIdx)
 
-//      val points = input.flatMap(_._1)
-//      val edges = input.flatMap(_._2)
-//      val graph = Graph.from(points, edges)
+              val borders = List(
+                makeBorder(currentPoint, pointR, Orientation.Right),
+                makeBorder(currentPoint, pointD, Orientation.Down),
+                makeBorder(pointD, pointRD, Orientation.Right),
+                makeBorder(pointR, pointRD, Orientation.Down)
+              )
 
-//       def getPoint(char: Char, x: BigInt, y: BigInt): Option[Point] =
-//    if (char == '.') Some(Valid(x, y))
-//    else if (char == '#') Some(Wall(x, y))
-//    else None
-//
-//
-//
-//  val getEdges = ZPipeline.mapChunks[Chunk[(List[Char], Long)], (List[Point], List[LDiEdge[Point]])](_.flatMap(_.toList match
-//    case (currentRow, y) :: (nextRow, yd) :: Nil =>
-//      currentRow.zipWithIndex.sliding(2).toList.flatMap { case (ch, x) :: (chNext, xr) :: Nil =>
-//        println(currentRow)
-//        println(nextRow)
-//
-//        val currentPoint = getPoint(ch, x, y)
-//        val pointR       = getPoint(chNext, xr, y)
-//        val pointD       = getPoint(nextRow(x), x, yd)
-//        val pointRD      = getPoint(nextRow(xr), xr, yd)
-//
-//        val edges: List[LDiEdge[Point]] = List(
-//          (currentPoint, pointR) match {
-//            case (Some(cp: Valid ), Some(pr: Valid)) => List(
-//              (cp ~+> pr) (Direction.Right),
-//              (pr ~+> cp) (Direction.Left)
-//            )
-//            case _ => Nil
-//          },
-//          (currentPoint, pointD) match {
-//            case (Some(cp: Valid ), Some(pd: Valid)) => List(
-//              (cp ~+> pd) (Direction.Down),
-//              (pd ~+> cp) (Direction.Up)
-//            )
-//            case _ => Nil
-//          },
-//          (pointR, pointRD) match {
-//            case (Some(pr: Valid ), Some(prd: Valid)) => List(
-//              (pr ~+> prd) (Direction.Down),
-//              (prd ~+> pr) (Direction.Up)
-//            )
-//            case _ => Nil
-//          },
-//          (pointD, pointRD) match {
-//            case (Some(pd: Valid ), Some(prd: Valid)) => List(
-//              (pd ~+> prd) (Direction.Right),
-//              (prd ~+> pd) (Direction.Left)
-//            )
-//            case _ => Nil
-//          }
-//        ).flatten
-//
-//
-//        val points = List(currentPoint, pointR, pointD, pointRD).flatten
-//
-//
-//        List((points, edges))
-//      }
-//  ))
+              val edges: Set[
+                LDiEdge[Valid] & EdgeCopy[LDiEdge] {
+                  type L1 = (Orientation, Orientation => Orientation) & Product
+                }
+              ] = Set(
+                makeEdges(currentPoint, pointR, Orientation.Right),
+                makeEdges(currentPoint, pointD, Orientation.Down),
+                makeEdges(pointD, pointRD, Orientation.Right),
+                makeEdges(pointR, pointRD, Orientation.Down)
+              ).flatten
+
+              val points = Set(currentPoint, pointR, pointD, pointRD).collect({
+                case p: Valid  => p
+              }) ++ borders.flatten
+
+              (points, edges)
+            }
+            .unzip
+          (rowPoints.flatten.toSet, rowEdges.flatten.toSet)
+        }
+        .toList
+        .unzip
+
+      val nodes = nodeSeq.flatten.distinct.sortBy(_.col).sortBy(_.row)
+      val edges = edgeSeq.flatten.distinct
+
+      GameBoard(commands, nodes, Graph(edges: _*))
+    }
+
 }

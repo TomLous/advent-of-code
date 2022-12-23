@@ -23,7 +23,7 @@ object model {
 
   case class Wall(row: BigInt, col: BigInt)                                           extends Point
   case class Empty(row: BigInt, col: BigInt)                                          extends Point
-  case class Border(row: BigInt, col: BigInt,  valid: Valid, orientation: Orientation) extends Point
+  case class Border(row: BigInt, col: BigInt, valid: Valid, orientation: Orientation) extends Point
 
   enum Direction:
     case Left, Right
@@ -48,27 +48,110 @@ object model {
       case Left  => Right
       case Right => Left
 
-    case Up    extends Orientation(3)
+    case Right extends Orientation(0)
     case Down  extends Orientation(1)
     case Left  extends Orientation(2)
-    case Right extends Orientation(0)
+    case Up    extends Orientation(3)
 
-  type ValidEdge = LDiEdge[Valid] & EdgeCopy[LDiEdge] { type L1 = (Orientation, Orientation => Orientation)  & Product }
+  type ValidEdge = LDiEdge[Valid] & EdgeCopy[LDiEdge] { type L1 = (Orientation, Orientation => Orientation) & Product }
 
   trait Command
   case class Move(steps: BigInt)    extends Command
   case class Turn(steps: Direction) extends Command
 
-  case class GameBoard(commands: List[Command], nodes: List[Point], graph: Graph[Valid, LDiEdge]):
+  case class GameBoard(commands: List[Command], rows: Int, cols: Int, nodes: List[Point], graph: Graph[Valid, LDiEdge]):
 
     lazy val wrapCube: GameBoard =
       val borders = nodes.collect { case b: Border => b }
+      val allBorders = borders.toSet
+      val nonBorders = nodes.collect {
+        case b: Valid => b
+        case b: Wall  => b
+      }
 
-      borders.groupBy(b => (b.row, b.col)).values.filter(_.length > 1).foreach(println)
+      val faceLength = math.sqrt(nonBorders.length / 6).toInt
 
-      GameBoard(commands,  nodes, graph)
+      val startStitching = borders.groupBy(b => (b.row, b.col)).values.filter(_.length > 1).map(_.sortBy(_.orientation.score)).toList
+
+      startStitching.foreach(println)
+
+      def getPointRange(fromRow: BigInt, fromCol: BigInt, borderOrientation: Orientation): List[(BigInt, BigInt)] =
+        borderOrientation match
+          case Orientation.Up  =>   List.fill(faceLength)(fromRow) zip (fromCol-faceLength to fromCol)
+          case Orientation.Down  => List.fill(faceLength)(fromRow) zip (fromCol-faceLength to fromCol)
+
+      val (usedBorders, firstStitchEdges) = startStitching.flatMap {
+        case List(Border(b1Row, b1Col, valid1, b1Orientation), Border(b2Row, b2Col, valid2, b2Orientation)) =>
+          val fB1toB2 = GameBoard.checkBorderTurn(b1Orientation, b2Orientation)
+          val fB2toB1 = GameBoard.checkBorderTurn(b2Orientation, b1Orientation)
+
+          val zipBorders:List[(Border, Border)] = (b1Orientation, b2Orientation) match
+            case (Orientation.Right, Orientation.Down) =>  //  ┛
+              val b1List = ((b1Row-faceLength+1) to b1Row).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Right)).toList
+              val b2List = ((b2Col-faceLength+1) to b2Col).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Down)).toList
+              b1List.zip(b2List)
+            case (Orientation.Right, Orientation.Up) => // ┓
+              val b1List = (b1Row until (b1Row+faceLength)).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Right)).toList
+              val b2List = ((b2Col-faceLength+1) to b2Col).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Up)).toList
+              b1List.zip(b2List)
+            case (Orientation.Left, Orientation.Up) => // ┏
+              val b1List = (b1Row until (b1Row+faceLength)).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Left)).toList
+              val b2List = (b2Col until (b2Col+faceLength)).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Up)).toList
+              b1List.zip(b2List)
+            case (Orientation.Down, Orientation.Left) => // ┗
+              val b1List = (b1Col until (b1Col + faceLength)).map(c => Border(b1Row, c, Valid(valid1.row, c), Orientation.Down)).toList
+              val b2List = ((b2Row-faceLength+1) to b2Row).map(r => Border(r, b2Col, Valid(r, valid2.col), Orientation.Left)).toList
+              b1List.zip(b2List)
+
+          zipBorders.flatMap{
+            case (b1, b2) if borders.contains(b1) && borders.contains(b2) =>
+              List(
+                ((b1, b2, b1Orientation.reverse), (b1.valid ~+> b2.valid)(b2.orientation, fB1toB2)),
+                ((b2, b1, b2Orientation.reverse), (b2.valid ~+> b1.valid)(b1.orientation, fB2toB1))
+              )
+            case _ => Nil
+          }
+      }.unzip
+
+      val remainingBorders = allBorders -- usedBorders.map(_._1).toSet
+
+      val connectedThroughFirstStitch =  remainingBorders.flatMap{rb => usedBorders.find(_._1.valid == rb.valid).map(pair => (rb, pair._2, pair._3))}
 
 
+      connectedThroughFirstStitch.foreach(println)
+
+      println(" --- ")
+
+
+//      firstStitchEdges.foreach( println)
+//
+//      remainingBorders.toList.sortBy(_.col).sortBy(_.row).foreach(println)
+//
+//      println(s"$rows $cols / $faceLength") // 200 150 / 12 16
+      // 200 150 / 12 16
+      // 200 150 / 12 16
+      // 15000
+
+      /*
+      case Right extends Orientation(0)
+      case Down  extends Orientation(1)
+      case Left  extends Orientation(2)
+      case Up    extends Orientation(3)
+       */
+      /*
+      real:
+      List(Border(51,101,Valid(51,100),Left), Border(51,101,Valid(50,101),Up))
+      List(Border(100,50,Valid(100,51),Right), Border(100,50,Valid(101,50),Down))
+      List(Border(151,51,Valid(151,50),Left), Border(151,51,Valid(150,51),Up))
+
+      test:
+      List(Border(4,8,Valid(4,9),Right), Border(4,8,Valid(5,8),Down))
+      List(Border(9,8,Valid(9,9),Right), Border(9,8,Valid(8,8),Up))
+      List(Border(8,13,Valid(9,13),Down), Border(8,13,Valid(8,12),Left))
+
+       */
+
+      GameBoard(commands, rows, cols, nodes, graph ++ firstStitchEdges)
 
     lazy val wrapAround: GameBoard =
       val borders = nodes.collect { case b: Border => b }
@@ -82,13 +165,13 @@ object model {
         }
         .flatMap { case (b1, b2) =>
           List(
-            (b1.valid ~+> b2.valid)(b2.orientation, GameBoard.borderIdentity),
-            (b2.valid ~+> b1.valid)(b1.orientation, GameBoard.borderIdentity)
+            (b1.valid ~+> b2.valid)(b2.orientation, GameBoard.borderStraight),
+            (b2.valid ~+> b1.valid)(b1.orientation, GameBoard.borderStraight)
           )
         }
         .distinct
 
-      GameBoard(commands,  nodes, graph ++ borderEdges)
+      GameBoard(commands, rows, cols, nodes, graph ++ borderEdges)
 
     private def node(valid: Valid): graph.NodeT = graph get valid
 
@@ -97,10 +180,12 @@ object model {
       def step(currentNode: graph.NodeT, currentOrientation: Orientation, stepsRemaining: Int): (graph.NodeT, Orientation) =
         if stepsRemaining == 0 then (currentNode, currentOrientation)
         else
-          currentNode.outgoing.find(_.label match {
-            case (o, _) => o == currentOrientation
-          }).map(e => (e.to, e.label)) match
-            case Some((nextNode, lab:(Orientation, Orientation => Orientation))) =>
+          currentNode.outgoing
+            .find(_.label match {
+              case (o, _) => o == currentOrientation
+            })
+            .map(e => (e.to, e.label)) match
+            case Some((nextNode, lab: (Orientation, Orientation => Orientation))) =>
               val orientationF = lab._2
               step(nextNode, orientationF(currentOrientation), stepsRemaining - 1)
             case None => (currentNode, currentOrientation)
@@ -123,7 +208,11 @@ object model {
     }
 
   object GameBoard:
-    val borderIdentity: Orientation => Orientation = a =>  a
+    val borderStraight: Orientation => Orientation  = identity
+    val borderTurnLeft: Orientation => Orientation  = _.turn(Direction.Left)
+    val borderTurnRight: Orientation => Orientation = _.turn(Direction.Right)
+
+    def checkBorderTurn(from: Orientation, to: Orientation) = if from.turn(Direction.Left) == to then borderTurnLeft else borderTurnLeft
 
     private def parseCommands(str: String): List[Command] =
       """(\d+|[LR])""".r
@@ -151,8 +240,8 @@ object model {
         (from, to) match {
           case (cp: Valid, pr: Valid) =>
             List(
-              (cp ~+> pr)(orientation, borderIdentity),
-              (pr ~+> cp)(orientation.reverse, borderIdentity)
+              (cp ~+> pr)(orientation, borderStraight),
+              (pr ~+> cp)(orientation.reverse, borderStraight)
             )
           case _ => Nil
         }
@@ -166,7 +255,7 @@ object model {
 
       var faceNum = 0
       val (nodeSeq, edgeSeq) = (" " :: field)
-        .map(" " + _) //prefix empty
+        .map(" " + _)                                   // prefix empty
         .map(_.padTo(maxWidth, ' ').toCharArray.toList) // pad to max width with spaces
         .zipWithIndex
         .sliding(2)
@@ -199,7 +288,8 @@ object model {
               ).flatten
 
               val points = Set(currentPoint, pointR, pointD, pointRD).collect({
-                case p: Valid  => p
+                case p: Valid => p
+                case w: Wall  => w
               }) ++ borders.flatten
 
               (points, edges)
@@ -213,7 +303,7 @@ object model {
       val nodes = nodeSeq.flatten.distinct.sortBy(_.col).sortBy(_.row)
       val edges = edgeSeq.flatten.distinct
 
-      GameBoard(commands, nodes, Graph(edges: _*))
+      GameBoard(commands, field.length - 1, maxWidth - 2, nodes, Graph(edges: _*))
     }
 
 }

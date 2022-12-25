@@ -1,6 +1,6 @@
-package aoc2022.template
+package aoc2022.day24
 
-import aoc2022.template.Solution
+import aoc2022.day24.Solution
 import zio.*
 import zio.stream.*
 import zio.test.*
@@ -8,13 +8,17 @@ import zio.test.*
 object SolutionSpec extends ZIOSpecDefault {
   
   private val sampleData1: String =
-    """
-      |""".stripMargin
+    """#.######
+      |#>>.<^<#
+      |#.<..<<#
+      |#>v.><>#
+      |#<^v^^>#
+      |######.#""".stripMargin
 
-  def spec: Spec[Any, Throwable] = suite("AoC [year] - Day [day] Solution")(
-    test("AoC [year] - Day [day] - part 1 - example 1") {
+  def spec: Spec[Any, Throwable] = suite("AoC 2022 - Day 24 Solution")(
+    test("AoC 2022 - Day 24 - part 1 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
-      val expectedOutput: BigInt = 0
+      val expectedOutput: BigInt = 18
 
       for {
         data    <- Solution.parseInput(input)
@@ -22,7 +26,7 @@ object SolutionSpec extends ZIOSpecDefault {
         output1 <- Solution.solvePart1(data)
       } yield assertTrue(output1 == expectedOutput)
     },
-    test("AoC [year] - Day [day] - part 2 - example 1") {
+    test("AoC 2022 - Day 24 - part 2 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
       val expectedOutput: BigInt = 0
 

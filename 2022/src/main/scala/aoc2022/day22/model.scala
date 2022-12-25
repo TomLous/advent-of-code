@@ -9,6 +9,7 @@ import scalax.collection.GraphTraversal.Visitor
 import scalax.collection.edge.*
 import scalax.collection.edge.Implicits.*
 import scalax.collection.mutable.Graph as MGraph
+import zio.Tag
 
 import scala.annotation.tailrec
 
@@ -21,12 +22,14 @@ object model {
   case class Valid(row: BigInt, col: BigInt) extends Point:
     def score: BigInt = ((row) * 1000) + ((col) * 4)
 
-  case class Wall(row: BigInt, col: BigInt)                                           extends Point
-  case class Empty(row: BigInt, col: BigInt)                                          extends Point
-  case class Border(row: BigInt, col: BigInt, valid: Valid, orientation: Orientation) extends Point
+  case class Wall(row: BigInt, col: BigInt)                                                   extends Point
+  case class Empty(row: BigInt, col: BigInt)                                                  extends Point
+  case class Border[P <: Point](row: BigInt, col: BigInt, point: P, orientation: Orientation) extends Point
 
   enum Direction:
     case Left, Right
+
+
 
   enum Orientation(val score: BigInt):
     def turn(direction: Direction): Orientation =
@@ -62,66 +65,120 @@ object model {
   case class GameBoard(commands: List[Command], rows: Int, cols: Int, nodes: List[Point], graph: Graph[Valid, LDiEdge]):
 
     lazy val wrapCube: GameBoard =
-      val borders = nodes.collect { case b: Border => b }
+      val borders    = nodes.collect { case b: Border[_] => b }
       val allBorders = borders.toSet
       val nonBorders = nodes.collect {
         case b: Valid => b
         case b: Wall  => b
       }
 
+      case class StitchState(b1: Border[_], b2: Border[_], b1Direction: Orientation, b2Direction: Orientation, remainingBorders: Set[Border[_]], edges: Set[ValidEdge] = Set.empty, done:Boolean=false)
+
       val faceLength = math.sqrt(nonBorders.length / 6).toInt
 
-      val startStitching = borders.groupBy(b => (b.row, b.col)).values.filter(_.length > 1).map(_.sortBy(_.orientation.score)).toList
+      val startStitching = borders.groupBy(b => (b.row, b.col)).values.filter(_.length > 1).map { case List(l, r) =>
+        StitchState(l, r, Orientation.Up, Orientation.Left, allBorders)
+      } // .map(_.sortBy(_.orientation.score)).toList
 
-      startStitching.foreach(println)
+      println(startStitching.head)
 
-      def getPointRange(fromRow: BigInt, fromCol: BigInt, borderOrientation: Orientation): List[(BigInt, BigInt)] =
-        borderOrientation match
-          case Orientation.Up  =>   List.fill(faceLength)(fromRow) zip (fromCol-faceLength to fromCol)
-          case Orientation.Down  => List.fill(faceLength)(fromRow) zip (fromCol-faceLength to fromCol)
+      def findNext(current: Border[_], direction: Orientation, borders: Set[Border[_]]):Option[(Border[_], Orientation)] =
+        direction match {
+          case Orientation.Down  => borders.find(b => b.col == current.col && b.row == current.row + 1)
+          case Orientation.Up    => borders.find(b => b.col == current.col && b.row == current.row - 1)
+          case Orientation.Left  => borders.find(b => b.col == current.col - 1 && b.row == current.row)
+          case Orientation.Right => borders.find(b => b.col == current.col + 1 && b.row == current.row)
+        } match {
+          case Some(b) =>
+            Some((b, direction))
+          case None =>
+            borders.find(b => b.point == current.point && b != current) match
+              case Some(newB) =>
+                val td = if current.orientation.turn(Direction.Left) == newB.orientation then Direction.Left else Direction.Right
+                val newO = direction.turn(td)
+                Some((newB, newO))
+              case None => None
+        }
 
-      val (usedBorders, firstStitchEdges) = startStitching.flatMap {
-        case List(Border(b1Row, b1Col, valid1, b1Orientation), Border(b2Row, b2Col, valid2, b2Orientation)) =>
-          val fB1toB2 = GameBoard.checkBorderTurn(b1Orientation, b2Orientation)
-          val fB2toB1 = GameBoard.checkBorderTurn(b2Orientation, b1Orientation)
 
-          val zipBorders:List[(Border, Border)] = (b1Orientation, b2Orientation) match
-            case (Orientation.Right, Orientation.Down) =>  //  ┛
-              val b1List = ((b1Row-faceLength+1) to b1Row).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Right)).toList
-              val b2List = ((b2Col-faceLength+1) to b2Col).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Down)).toList
-              b1List.zip(b2List)
-            case (Orientation.Right, Orientation.Up) => // ┓
-              val b1List = (b1Row until (b1Row+faceLength)).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Right)).toList
-              val b2List = ((b2Col-faceLength+1) to b2Col).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Up)).toList
-              b1List.zip(b2List)
-            case (Orientation.Left, Orientation.Up) => // ┏
-              val b1List = (b1Row until (b1Row+faceLength)).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Left)).toList
-              val b2List = (b2Col until (b2Col+faceLength)).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Up)).toList
-              b1List.zip(b2List)
-            case (Orientation.Down, Orientation.Left) => // ┗
-              val b1List = (b1Col until (b1Col + faceLength)).map(c => Border(b1Row, c, Valid(valid1.row, c), Orientation.Down)).toList
-              val b2List = ((b2Row-faceLength+1) to b2Row).map(r => Border(r, b2Col, Valid(r, valid2.col), Orientation.Left)).toList
-              b1List.zip(b2List)
 
-          zipBorders.flatMap{
-            case (b1, b2) if borders.contains(b1) && borders.contains(b2) =>
-              List(
-                ((b1, b2, b1Orientation.reverse), (b1.valid ~+> b2.valid)(b2.orientation, fB1toB2)),
-                ((b2, b1, b2Orientation.reverse), (b2.valid ~+> b1.valid)(b1.orientation, fB2toB1))
+
+
+      def nextStitch(stitchState: StitchState) = stitchState match {
+        case StitchState(b1 @ Border(b1Row, b1Col, pB1, b1Or), b2 @ Border(b2Row, b2Col, pB2, b2Or), b1Direction, b2Direction, remBorders, edges, done) =>
+          val newEdges: Set[ValidEdge] = (pB1, pB2) match {
+            case (valid1: Valid, valid2: Valid) =>
+              Set(
+                (valid1 ~+> valid2)(b2Or, GameBoard.checkBorderTurn(b1Or, b2Or)),
+                (valid2 ~+> valid1)(b1Or, GameBoard.checkBorderTurn(b2Or, b1Or))
               )
-            case _ => Nil
+            case _ => Set.empty
           }
-      }.unzip
 
-      val remainingBorders = allBorders -- usedBorders.map(_._1).toSet
+          println("---")
+          println(pB1)
+          println(pB2)
+          println(newEdges)
 
-      val connectedThroughFirstStitch =  remainingBorders.flatMap{rb => usedBorders.find(_._1.valid == rb.valid).map(pair => (rb, pair._2, pair._3))}
+          (findNext(b1, b1Direction, remBorders), findNext(b2, b2Direction, remBorders)) match
+            case (Some(nextB1, nextB1Direction), Some(nextB2, nextB2Direction)) =>
+              val newBorders = remBorders - b1 - b2
+              StitchState(nextB1, nextB2, nextB1Direction, nextB2Direction, newBorders, edges ++ newEdges, done =  done | newBorders.isEmpty)
+            case _ =>
+              StitchState(b1, b2, b1Direction, b2Direction, remBorders, edges, done = true)
+      }
 
+      val l         = LazyList.iterate(startStitching.head)(nextStitch)
+      val lastState = l.dropWhile(!_.done).head
 
-      connectedThroughFirstStitch.foreach(println)
+      lastState.edges.foreach(println)
+
+//      val sticther = LazyList.iterate(startStitching.head)
+
+//      def getPointRange(fromRow: BigInt, fromCol: BigInt, borderOrientation: Orientation): List[(BigInt, BigInt)] =
+//        borderOrientation match
+//          case Orientation.Up   => List.fill(faceLength)(fromRow) zip (fromCol - faceLength to fromCol)
+//          case Orientation.Down => List.fill(faceLength)(fromRow) zip (fromCol - faceLength to fromCol)
+//
+//      val (usedBorders, firstStitchEdges) = startStitching.flatMap { case List(Border(b1Row, b1Col, valid1, b1Orientation), Border(b2Row, b2Col, valid2, b2Orientation)) =>
+//        val fB1toB2 = GameBoard.checkBorderTurn(b1Orientation, b2Orientation)
+//        val fB2toB1 = GameBoard.checkBorderTurn(b2Orientation, b1Orientation)
+//
+//        val zipBorders: List[(Border, Border)] = (b1Orientation, b2Orientation) match
+//          case (Orientation.Right, Orientation.Down) => //  ┛
+//            val b1List = ((b1Row - faceLength + 1) to b1Row).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Right)).toList
+//            val b2List = ((b2Col - faceLength + 1) to b2Col).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Down)).toList
+//            b1List.zip(b2List)
+//          case (Orientation.Right, Orientation.Up) => // ┓
+//            val b1List = (b1Row until (b1Row + faceLength)).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Right)).toList
+//            val b2List = ((b2Col - faceLength + 1) to b2Col).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Up)).toList
+//            b1List.zip(b2List)
+//          case (Orientation.Left, Orientation.Up) => // ┏
+//            val b1List = (b1Row until (b1Row + faceLength)).map(r => Border(r, b1Col, Valid(r, valid1.col), Orientation.Left)).toList
+//            val b2List = (b2Col until (b2Col + faceLength)).map(c => Border(b2Row, c, Valid(valid2.row, c), Orientation.Up)).toList
+//            b1List.zip(b2List)
+//          case (Orientation.Down, Orientation.Left) => // ┗
+//            val b1List = (b1Col until (b1Col + faceLength)).map(c => Border(b1Row, c, Valid(valid1.row, c), Orientation.Down)).toList
+//            val b2List = ((b2Row - faceLength + 1) to b2Row).map(r => Border(r, b2Col, Valid(r, valid2.col), Orientation.Left)).toList
+//            b1List.zip(b2List)
+//
+//        zipBorders.flatMap {
+//          case (b1, b2) if borders.contains(b1) && borders.contains(b2) =>
+//            List(
+//              ((b1, b2, b1Orientation.reverse), (b1.valid ~+> b2.valid)(b2.orientation, fB1toB2)),
+//              ((b2, b1, b2Orientation.reverse), (b2.valid ~+> b1.valid)(b1.orientation, fB2toB1))
+//            )
+//          case _ => Nil
+//        }
+//      }.unzip
+//
+//      val remainingBorders = allBorders -- usedBorders.map(_._1).toSet
+//
+//      val connectedThroughFirstStitch = remainingBorders.flatMap { rb => usedBorders.find(_._1.valid == rb.valid).map(pair => (rb, pair._2, pair._3)) }
+//
+//      connectedThroughFirstStitch.foreach(println)
 
       println(" --- ")
-
 
 //      firstStitchEdges.foreach( println)
 //
@@ -151,27 +208,35 @@ object model {
 
        */
 
-      GameBoard(commands, rows, cols, nodes, graph ++ firstStitchEdges)
+      GameBoard(commands, rows, cols, nodes, graph)
 
-    lazy val wrapAround: GameBoard =
-      val borders = nodes.collect { case b: Border => b }
+    lazy val wrapAround: GameBoard = {
+      val validBorders: List[Border[Valid]] = nodes.collect { case b @ Border(_, _, _: Valid, _) => b.asInstanceOf[Border[Valid]] }
 
-      val borderEdges: List[ValidEdge] = borders
-        .flatMap {
-          case border if border.orientation == Orientation.Up || border.orientation == Orientation.Down =>
-            borders.find(b => b.orientation == border.orientation.reverse && b.valid.col == border.valid.col).map(b => (border, b))
-          case border if border.orientation == Orientation.Left || border.orientation == Orientation.Right =>
-            borders.find(b => b.orientation == border.orientation.reverse && b.valid.row == border.valid.row).map(b => (border, b))
-        }
+      def findOppositePair(border: Border[Valid]): Option[(Border[Valid], Border[Valid])] = {
+        val fCheck: Border[Valid] => Boolean =
+          if (border.orientation == Orientation.Up || border.orientation == Orientation.Down)
+            _.point.col == border.point.col
+          else
+            _.point.row == border.point.row
+
+        validBorders
+          .find(b => b.orientation == border.orientation.reverse && fCheck(b))
+          .map(b => (border, b))
+      }
+
+      val wrapAroundEdges = validBorders
+        .flatMap(findOppositePair)
         .flatMap { case (b1, b2) =>
           List(
-            (b1.valid ~+> b2.valid)(b2.orientation, GameBoard.borderStraight),
-            (b2.valid ~+> b1.valid)(b1.orientation, GameBoard.borderStraight)
+            (b1.point ~+> b2.point)(b2.orientation, GameBoard.borderStraight),
+            (b2.point ~+> b1.point)(b1.orientation, GameBoard.borderStraight)
           )
         }
         .distinct
 
-      GameBoard(commands, rows, cols, nodes, graph ++ borderEdges)
+      GameBoard(commands, rows, cols, nodes, graph ++ wrapAroundEdges)
+    }
 
     private def node(valid: Valid): graph.NodeT = graph get valid
 
@@ -248,9 +313,9 @@ object model {
 
       def makeBorder(from: Point, to: Point, orientation: Orientation) =
         (from, to) match {
-          case (e: Empty, p: Valid) => Some(Border(e.row, e.col, p, orientation))
-          case (p: Valid, e: Empty) => Some(Border(e.row, e.col, p, orientation.reverse))
-          case _                    => None
+          case (e: Empty, p @ (_: Wall | _: Valid)) => Some(Border(e.row, e.col, p, orientation))
+          case (p @ (_: Wall | _: Valid), e: Empty) => Some(Border(e.row, e.col, p, orientation.reverse))
+          case _                                    => None
         }
 
       var faceNum = 0
@@ -276,11 +341,7 @@ object model {
                 makeBorder(pointR, pointRD, Orientation.Down)
               )
 
-              val edges: Set[
-                LDiEdge[Valid] & EdgeCopy[LDiEdge] {
-                  type L1 = (Orientation, Orientation => Orientation) & Product
-                }
-              ] = Set(
+              val edges: Set[ValidEdge] = Set(
                 makeEdges(currentPoint, pointR, Orientation.Right),
                 makeEdges(currentPoint, pointD, Orientation.Down),
                 makeEdges(pointD, pointRD, Orientation.Right),

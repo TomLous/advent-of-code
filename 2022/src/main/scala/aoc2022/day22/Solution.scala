@@ -1,7 +1,7 @@
 package aoc2022.day22
 
 import aoc2022.day12.Solution.parseLine
-import aoc2022.day22.model.*
+import aoc2022.day22.model.GameBoard
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.*
 import scalax.collection.GraphPredef.*

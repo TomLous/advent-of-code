@@ -4,17 +4,17 @@ lazy val root = (project in file("."))
   .settings(
     name := "advent-of-code"
   )
-  .aggregate(aoc2020, aoc2021, aoc2022)
+  .aggregate(aoc2020, aoc2021, aoc2022, aoc2023)
 
 lazy val zio2Libs = Seq(
-  "dev.zio"     %% "zio"               % "2.0.4",
-  "dev.zio"     %% "zio-streams"       % "2.0.4",
-  "dev.zio"     %% "zio-test"          % "2.0.4" % Test,
-  "dev.zio"     %% "zio-test-sbt"      % "2.0.4" % Test,
-  "dev.zio"     %% "zio-test-magnolia" % "2.0.4" % Test,
-  "dev.zio"     %% "zio-optics"        % "0.2.0",
-  "dev.zio"     %% "zio-json"          % "0.4.2",
-  "fr.janalyse" %% "zio-worksheet"     % "2.0.4.0"
+  "dev.zio"     %% "zio"               % "2.0.19",
+  "dev.zio"     %% "zio-streams"       % "2.0.19",
+  "dev.zio"     %% "zio-test"          % "2.0.19" % Test,
+  "dev.zio"     %% "zio-test-sbt"      % "2.0.19" % Test,
+  "dev.zio"     %% "zio-test-magnolia" % "2.0.19" % Test,
+  "dev.zio"     %% "zio-optics"        % "0.2.1",
+  "dev.zio"     %% "zio-json"          % "0.6.2",
+  "fr.janalyse" %% "zio-worksheet"     % "2.0.19.0"
 )
 
 lazy val linAlgLibs = Seq(
@@ -29,34 +29,44 @@ lazy val parallelLibs = Seq(
   "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4"
 )
 
+lazy val defaults = Seq(
+  scalaVersion := "3.2.1",
+  libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
+  Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+)
+
 lazy val aoc2020 = (project in file("2020"))
+  .settings(defaults)
   .settings(
-    scalaVersion := "3.2.1",
     moduleName   := "2020",
-    libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
-    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   ).dependsOn(util)
 
 lazy val aoc2021 = (project in file("2021"))
+  .settings(defaults)
   .settings(
-    scalaVersion := "3.2.1",
-    moduleName   := "2021",
-    libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
-    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
-  ).dependsOn(util)
+    moduleName := "2021"
+  )
+  .dependsOn(util)
 
 lazy val aoc2022 = (project in file("2022"))
+  .settings(defaults)
   .settings(
-    scalaVersion := "3.2.1",
-    moduleName   := "2022",
-    libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
-    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
-  ).dependsOn(util)
+    moduleName := "2022"
+  )
+  .dependsOn(util)
+
+lazy val aoc2023 = (project in file("2023"))
+  .settings(defaults)
+  .settings(
+    moduleName := "2023"
+  )
+  .dependsOn(util)
+
 
 lazy val util = (project in file("util"))
+  .settings(defaults)
   .settings(
-    scalaVersion := "3.2.1",
-    moduleName   := "2022",
-    libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
-    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    moduleName := "util"
   )
+
+

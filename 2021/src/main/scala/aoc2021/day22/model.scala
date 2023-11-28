@@ -28,6 +28,8 @@ object model {
     def intersectRange(a: Range, b: Range): Range =
       if (a.end < b.start || a.start > b.end) Range(0, 0)
       else Range.inclusive(a.start max b.start, a.end min b.end)
+    end intersectRange
+
 
   object RebootStep:
     def apply(on: Boolean, x: Range, y: Range, z: Range):RebootStep =

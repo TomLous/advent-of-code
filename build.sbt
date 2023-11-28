@@ -30,7 +30,7 @@ lazy val parallelLibs = Seq(
 )
 
 lazy val defaults = Seq(
-  scalaVersion := "3.2.1",
+  scalaVersion := "3.3.1",
   libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
   Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 )

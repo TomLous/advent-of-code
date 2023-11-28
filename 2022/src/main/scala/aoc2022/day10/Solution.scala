@@ -15,7 +15,7 @@ object Solution {
     .map(parseLine) // TODO make this streaming with zipping the pos with the Input etc etc
     .runCollect
     .map(_.toList)
-    .map(CRT)
+    .map(CRT.apply)
 
   def solvePart1(input: CRT): ZIO[Any, Throwable, Long] =
     ZIO.succeed(input.signalStrength)

@@ -38,7 +38,6 @@ Consider your entire calibration document. **What is the sum of all of the calib
 
 
 Your puzzle answer was `54081`.
-<p class="day-success">The first half of this puzzle is complete! It provides one gold star: *</p>
 
 ---
 
@@ -64,8 +63,11 @@ In this example, the calibration values are `29`, `83`, `13`, `24`, `42`, `14`, 
 **What is the sum of all of the calibration values?**
 
 
+Your puzzle answer was `54649`.
+<p class="day-success">Both parts of this puzzle are complete! They provide two gold stars: **</p>
+At this point, you should [return to your Advent calendar](/2023) and try another puzzle.
 
-Although it hasn't changed, you can still [get your puzzle input](1/input).
+If you still want to see it, you can [get your puzzle input](1/input).
 
 
 ## Notes

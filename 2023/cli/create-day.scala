@@ -95,7 +95,7 @@ object Templater {
               .replaceAll("""(?si)<code>(.*?)</code>""", "`$1`")
               .replaceAll("""(?si)<em.*?>(.*?)</em>""", "**$1**")
               .replaceAll("""(?si)`\*\*(.*?)\*\*`""", "**`$1`**")
-              .replaceAll("""(?si)<a href="(.*?)">(.*?)</a>""", "[$2]($1)")
+              .replaceAll("""(?si)<a href="(.*?)".*?>(.*?)</a>""", "[$2]($1)")
               .replaceAll("""(?si)<li>(.*?)</li>""", "- $1")
               .replaceAll("""(?si)<ul>(.*?)</ul>""", "\n$1")
               .replaceAll("""(?si)<article.*?>(.*?)</article>""", "\n---\n$1")

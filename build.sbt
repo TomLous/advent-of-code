@@ -58,7 +58,8 @@ lazy val aoc2022 = (project in file("2022"))
 lazy val aoc2023 = (project in file("2023"))
   .settings(defaults)
   .settings(
-    moduleName := "2023"
+    moduleName := "2023",
+    libraryDependencies ++= testLibs,
   )
   .dependsOn(util)
 

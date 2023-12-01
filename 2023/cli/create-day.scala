@@ -32,8 +32,8 @@ object Templater {
         val targetSrcDir = srcBase / targetFolder
         val targetTestDir = testBase / targetFolder
 
-        // create puzzle-input.txt
-        val puzzleInputFile = resourceBase / targetFolder / "puzzle-input.txt"
+        // create input.txt
+        val puzzleInputFile = resourceBase / targetFolder / "input.txt"
         val readmeFile = srcBase / targetFolder / "README.md"
 
         val userAgent = sys.env("GITHUB_URL") + " " + sys.env("EMAIL_ADDRESS")
@@ -61,6 +61,7 @@ object Templater {
         def replaceAll(s: String) =
           s.replace("template", targetFolder)
            .replace("[day]", day.toString)
+           .replace("DayN", "Day" + day.toString)
            .replace("[year]", year.toString)
 
         def copyTemplate(from: Path, to: Path) =
@@ -70,6 +71,7 @@ object Templater {
               val content = os.read(f)
               os.write.over(f, replaceAll(content))
             }
+            os.move(to / "DayN.scala", to / s"Day$day.scala")
           else
             println(to.toString + " already exists")
 
@@ -105,6 +107,29 @@ object Templater {
               .replaceAll("""(?si)<form.*?>(.*?)</form>""", "")
               .replaceAll("""(?si)You can also \[Share.*""", "")
 //              .replaceAll("""(?si)<p class="day-success">.*""", "")
+
+
+
+            """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+              os.write.over(
+                resourceBase / targetFolder / s"example-part${i+1}.txt",
+                m.group(1)
+              )
+              os.write.over(
+                resourceBase / targetFolder / s"example-part${i+1}-target.txt",
+                m.group(3)
+              )
+            }
+
+            """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+              os.write.over(
+                resourceBase / targetFolder / s"result-part${i+1}.txt",
+                m.group(1)
+              )
+            }
+
+
+
 
             val readmeContent =  os.read(readmeFile).replaceAll("""(?si)## Description(.*)##""", "## Description\n\n" + markdown + "\n##")
 

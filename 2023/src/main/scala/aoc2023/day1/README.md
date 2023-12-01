@@ -37,14 +37,35 @@ In this example, the calibration values of these four lines are `12`, `38`, `15`
 Consider your entire calibration document. **What is the sum of all of the calibration values?**
 
 
-To begin, [get your puzzle input](1/input" target="_blank).
+Your puzzle answer was `54081`.
+<p class="day-success">The first half of this puzzle is complete! It provides one gold star: *</p>
 
-<form method="post" action="1/answer"><input type="hidden" name="level" value="1"/>Answer: <input type="text" name="answer" autocomplete="off"/> <input type="submit" value="[Submit]"/>
-</form>
-You can also [Share<span class="share-content">on
-  [Twitter](https://twitter.com/intent/tweet?text=%22Trebuchet%3F%21%22+%2D+Day+1+%2D+Advent+of+Code+2023&amp;url=https%3A%2F%2Fadventofcode%2Ecom%2F2023%2Fday%2F1&amp;related=ericwastl&amp;hashtags=AdventOfCode" target="_blank)
-  <a href="javascript:void(0);" onclick="var ms; try{ms=localStorage.getItem('mastodon.server')}finally{} if(typeof ms!=='string')ms=''; ms=prompt('Mastodon Server?',ms); if(typeof ms==='string' && ms.length){this.href='https://'+ms+'/share?text=%22Trebuchet%3F%21%22+%2D+Day+1+%2D+Advent+of+Code+2023+%23AdventOfCode+https%3A%2F%2Fadventofcode%2Ecom%2F2023%2Fday%2F1';try{localStorage.setItem('mastodon.server',ms);}finally{}}else{return false;}" target="_blank">Mastodon</a
->]</span> this puzzle.
+---
+
+### --- Part Two ---
+
+Your calculation isn't quite right. It looks like some of the digits are actually **spelled out with letters**: `one`, `two`, `three`, `four`, `five`, `six`, `seven`, `eight`, and `nine` **also** count as valid "digits".
+
+Equipped with this new information, you now need to find the real first and last digit on each line. For example:
+
+
+```
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+
+```
+In this example, the calibration values are `29`, `83`, `13`, `24`, `42`, `14`, and `76`. Adding these together produces **`281`**.
+
+**What is the sum of all of the calibration values?**
+
+
+
+Although it hasn't changed, you can still [get your puzzle input](1/input).
 
 
 ## Notes

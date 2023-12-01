@@ -84,6 +84,8 @@ object Templater {
           println(targetTestDir.toString + " already exists")
 
         val info = Try(requests.get(s"https://adventofcode.com/$year/day/$day", verifySslCerts=false, check = true, headers = Map("User-Agent" -> userAgent, "Cookie" -> s"session=${sessionId}", "Cache-Control"-> "no-cache")))
+
+
         info match
           case Success(response) =>
             val markdown:String = response.text()
@@ -100,7 +102,9 @@ object Templater {
               .replaceAll("""(?si)<ul>(.*?)</ul>""", "\n$1")
               .replaceAll("""(?si)<article.*?>(.*?)</article>""", "\n---\n$1")
               .replaceAll("""(?si)<span.*?>(.*?)</span>""", "$1")
-              .replaceAll("""(?si)<p class="day-success">.*""", "")
+              .replaceAll("""(?si)<form.*?>(.*?)</form>""", "")
+              .replaceAll("""(?si)You can also \[Share.*""", "")
+//              .replaceAll("""(?si)<p class="day-success">.*""", "")
 
             val readmeContent =  os.read(readmeFile).replaceAll("""(?si)## Description(.*)##""", "## Description\n\n" + markdown + "\n##")
 

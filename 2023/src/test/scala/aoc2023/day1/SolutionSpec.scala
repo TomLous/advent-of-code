@@ -13,6 +13,16 @@ object SolutionSpec extends ZIOSpecDefault {
       |treb7uchet
       |""".stripMargin
 
+  private val sampleData2: String =
+    """two1nine
+      |eightwothree
+      |abcone2threexyz
+      |xtwone3four
+      |4nineeightseven2
+      |zoneight234
+      |7pqrstsixteen
+      |""".stripMargin
+
   def spec: Spec[Any, Throwable] = suite("AoC 2023 - Day 1 Solution")(
     test("AoC 2023 - Day 1 - part 1 - example 1") {
       val input                  = ZStream.fromIterable(sampleData1.split("\n"))
@@ -25,8 +35,8 @@ object SolutionSpec extends ZIOSpecDefault {
       } yield assertTrue(output1 == expectedOutput)
     },
     test("AoC 2023 - Day 1 - part 2 - example 1") {
-      val input                  = ZStream.fromIterable(sampleData1.split("\n"))
-      val expectedOutput: BigInt = 0
+      val input                  = ZStream.fromIterable(sampleData2.split("\n"))
+      val expectedOutput: BigInt = 281
 
       for {
         data    <- Solution.parseInput(input)

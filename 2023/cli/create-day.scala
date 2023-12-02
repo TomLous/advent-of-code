@@ -71,7 +71,9 @@ object Templater {
               val content = os.read(f)
               os.write.over(f, replaceAll(content))
             }
-            os.move(to / "DayN.scala", to / s"Day$day.scala")
+            if(os.exists(to / "DayN.scala")){
+              os.move(to / "DayN.scala", to / s"Day$day.scala")
+            }
           else
             println(to.toString + " already exists")
 

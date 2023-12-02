@@ -41,7 +41,6 @@ Determine which games would have been possible if the bag had been loaded with o
 
 
 Your puzzle answer was `2512`.
-<p class="day-success">The first half of this puzzle is complete! It provides one gold star: *</p>
 
 ---
 
@@ -75,8 +74,11 @@ The **power** of a set of cubes is equal to the numbers of red, green, and blue 
 For each game, find the minimum set of cubes that must have been present. **What is the sum of the power of these sets?**
 
 
+Your puzzle answer was `67335`.
+<p class="day-success">Both parts of this puzzle are complete! They provide two gold stars: **</p>
+At this point, you should [return to your Advent calendar](/2023) and try another puzzle.
 
-Although it hasn't changed, you can still [get your puzzle input](2/input).
+If you still want to see it, you can [get your puzzle input](2/input).
 
 
 ## Notes

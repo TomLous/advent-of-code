@@ -1,0 +1,27 @@
+# IntelliJ
+.idea*
+*.iml
+
+# VS Code
+.bsp
+.metals
+.vscode
+.bloop
+
+# Mac
+.DS_Store
+
+# SBT
+project/project
+target/
+*.log
+*.class
+
+# Project
+output
+
+# Scala CLI
+.scala-build
+
+# ENV
+.env

@@ -35,6 +35,13 @@ lazy val defaults = Seq(
   Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 )
 
+lazy val aoc2019 = (project in file("2019"))
+  .settings(defaults)
+  .settings(
+    moduleName := "2019",
+  )
+  .dependsOn(util)
+
 lazy val aoc2020 = (project in file("2020"))
   .settings(defaults)
   .settings(
@@ -59,9 +66,11 @@ lazy val aoc2023 = (project in file("2023"))
   .settings(defaults)
   .settings(
     moduleName := "2023",
-    libraryDependencies ++= testLibs,
   )
   .dependsOn(util)
+
+
+
 
 
 lazy val util = (project in file("util"))

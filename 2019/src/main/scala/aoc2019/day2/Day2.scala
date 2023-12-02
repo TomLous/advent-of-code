@@ -56,4 +56,4 @@ object Day2 extends App:
   checkSolution(part1Solution, 1)
 //  checkExample("example-part2", solvePart2)
   println("part2: " + solvePart2("input"))
-//  checkSolution(part2Solution, 2)
+  checkSolution(part2Solution, 2)

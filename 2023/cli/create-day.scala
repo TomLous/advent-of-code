@@ -111,26 +111,29 @@ object Templater {
 //              .replaceAll("""(?si)<p class="day-success">.*""", "")
 
 
-
-            """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-              os.write.over(
-                resourceBase / targetFolder / s"example-part${i+1}.txt",
-                m.group(1)
-              )
-              os.write.over(
-                resourceBase / targetFolder / s"example-part${i+1}-target.txt",
-                m.group(3)
-              )
+            Try{
+              """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+                os.write.over(
+                  resourceBase / targetFolder / s"example-part${i+1}.txt",
+                  m.group(1)
+                )
+                os.write.over(
+                  resourceBase / targetFolder / s"example-part${i+1}-target.txt",
+                  m.group(3)
+                )
+              }
             }
 
-            """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-              os.write.over(
-                resourceBase / targetFolder / s"result-part${i+1}.txt",
-                m.group(1)
-              )
+            Try{
+              """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+                os.write.over(
+                  resourceBase / targetFolder / s"result-part${i+1}.txt",
+                  m.group(1)
+                )
+              }
             }
 
-
+            println(markdown)
 
 
             val readmeContent =  os.read(readmeFile).replaceAll("""(?si)## Description(.*)##""", "## Description\n\n" + markdown + "\n##")

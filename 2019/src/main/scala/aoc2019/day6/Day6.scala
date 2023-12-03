@@ -1,9 +1,9 @@
-package aoc2019.template
+package aoc2019.day6
 
 import scala.io.Source
 
 
-object DayN extends App:
+object Day6 extends App:
   private def readLines(inputFile: String) = Source.fromResource(getClass.getPackageName.replace('.','/') + s"/$inputFile.txt").getLines()
 
   private def checkExample(inputFile: String, f:String=>Long ):Unit =

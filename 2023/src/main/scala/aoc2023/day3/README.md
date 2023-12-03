@@ -4,6 +4,8 @@
 
 ## Description
 
+Q
+
 ---
 
 ### --- Day 3: Gear Ratios ---
@@ -42,7 +44,6 @@ Of course, the actual engine schematic is much larger. **What is the sum of all 
 
 
 Your puzzle answer was `537732`.
-<p class="day-success">The first half of this puzzle is complete! It provides one gold star: *</p>
 
 ---
 
@@ -79,10 +80,13 @@ In this schematic, there are **two** gears. The first is in the top left; it has
 **What is the sum of all of the gear ratios in your engine schematic?**
 
 
+Your puzzle answer was `84883664`.
+<p class="day-success">Both parts of this puzzle are complete! They provide two gold stars: **</p>
+At this point, you should [return to your Advent calendar](/2023) and try another puzzle.
 
-Although it hasn't changed, you can still [get your puzzle input](3/input).
+If you still want to see it, you can [get your puzzle input](3/input).
 
-
+E
 ## Notes
 
 

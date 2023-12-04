@@ -114,11 +114,11 @@ object Templater {
 
             Try{
               """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-                os.write.over(
+                os.write(
                   resourceBase / targetFolder / s"example-part${i+1}.txt",
                   m.group(1)
                 )
-                os.write.over(
+                os.write(
                   resourceBase / targetFolder / s"example-part${i+1}-target.txt",
                   m.group(3)
                 )
@@ -127,7 +127,7 @@ object Templater {
 
             Try{
               """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-                os.write.over(
+                os.write(
                   resourceBase / targetFolder / s"result-part${i+1}.txt",
                   m.group(1)
                 )
@@ -136,7 +136,6 @@ object Templater {
 
             val safemd = Regex.quote(markdown).replaceAll("""\$""", """\\\$""")
 
-            println(safemd)
 
             val readmeContent =  os.read(readmeFile).replaceAll("""(?si)## Description(.*)##""", "## Description\n\n" + safemd  + "\n##")
 

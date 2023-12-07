@@ -15,20 +15,19 @@ object Day7 extends App:
     assert(solution == target, s"$solution != $target -- Part $part failed!")
 
   case class Hand(cards: List[Char], withJokers: Boolean = false):
-    private lazy val numJokers = if withJokers then cards.count(_ == 'J') else 0
+    private val (jokers, nonJokers) = cards.partition(c => withJokers && c == 'J')
+
+    private lazy val numJokers = jokers.size
 
     private lazy val groups: List[Int] =
-      val grouped = cards
-        .filterNot(c => withJokers && c == 'J')
+      nonJokers
         .groupBy(identity)
         .map(_._2.size)
         .toList
-      if withJokers then
-        if grouped.isEmpty then List(numJokers)
-        else
-          val largest = grouped.max
-          grouped.updated(grouped.indexOf(largest), largest + numJokers)
-      else grouped
+        .sortBy(-_) match
+        case Nil  => List(numJokers)
+        case largest :: other => largest + numJokers :: other
+
 
     lazy val handType: Int =
       if groups.contains(5) then 7

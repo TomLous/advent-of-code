@@ -66,24 +66,20 @@ object Day7 extends App:
   def parse(lines: Iterator[String], withJokers: Boolean) = lines.map { case s"$hand $bid" =>
     (Hand(hand.toCharArray.toList, withJokers), bid.toInt)
   }.toList
+  
+  private def solve(inputFile: String, withJokers: Boolean): Long =
+    parse(readLines(inputFile), withJokers)
+      .sortBy(_._1)(if withJokers then JokerHandOrdering else NoJokerHandOrdering)
+      .map(_._2)
+      .zipWithIndex
+      .map(t => t._1 * (t._2 + 1))
+      .sum
 
   private def solvePart1(inputFile: String): Long =
-    val data = parse(readLines(inputFile), false)
-    data
-      .sortBy(_._1)(NoJokerHandOrdering)
-      .map(_._2)
-      .zipWithIndex
-      .map(t => t._1 * (t._2 + 1))
-      .sum
+    solve(inputFile, false)
 
   private def solvePart2(inputFile: String): Long =
-    val data = parse(readLines(inputFile), true)
-    data
-      .sortBy(_._1)(JokerHandOrdering)
-      .map(_._2)
-      .zipWithIndex
-      .map(t => t._1 * (t._2 + 1))
-      .sum
+    solve(inputFile, true)
 
   private lazy val part1Solution = solvePart1("input")
   private lazy val part2Solution = solvePart2("input")

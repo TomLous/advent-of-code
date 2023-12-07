@@ -112,27 +112,27 @@ object Templater {
 //              .replaceAll("""(?si)<p class="day-success">.*""", "")
 
 
-            Try{
-              """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-                os.write(
-                  resourceBase / targetFolder / s"example-part${i+1}.txt",
-                  m.group(1)
-                )
-                os.write(
-                  resourceBase / targetFolder / s"example-part${i+1}-target.txt",
-                  m.group(3)
-                )
-              }
+
+            """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+              Try{os.write(
+                resourceBase / targetFolder / s"example-part${i+1}.txt",
+                m.group(1)
+              )}
+              Try{os.write(
+                resourceBase / targetFolder / s"example-part${i+1}-target.txt",
+                m.group(3)
+              )}
             }
 
-            Try{
-              """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-                os.write(
-                  resourceBase / targetFolder / s"result-part${i+1}.txt",
-                  m.group(1)
-                )
-              }
+
+
+            """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+              Try{os.write(
+                resourceBase / targetFolder / s"result-part${i+1}.txt",
+                m.group(1)
+              )}
             }
+
 
             val safemd = Regex.quote(markdown).replaceAll("""\$""", """\\\$""")
 

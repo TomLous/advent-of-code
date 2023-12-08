@@ -38,6 +38,8 @@ object Day7 extends App:
       else if groups.count(_ == 2) == 1 then 2
       else 1
 
+
+
   trait CardOrdering extends Ordering[List[Char]]:
     def cardOrder: Map[Char, Int]
     override def compare(l: List[Char], r: List[Char]): Int =
@@ -66,7 +68,7 @@ object Day7 extends App:
   def parse(lines: Iterator[String], withJokers: Boolean) = lines.map { case s"$hand $bid" =>
     (Hand(hand.toCharArray.toList, withJokers), bid.toInt)
   }.toList
-  
+
   private def solve(inputFile: String, withJokers: Boolean): Long =
     parse(readLines(inputFile), withJokers)
       .sortBy(_._1)(if withJokers then JokerHandOrdering else NoJokerHandOrdering)

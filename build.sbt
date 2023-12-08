@@ -21,8 +21,13 @@ lazy val linAlgLibs = Seq(
   "org.scalanlp" %% "breeze" % "2.1.0"
 )
 
-lazy val graphLibs = Seq(
+
+lazy val oldGraphLibs = Seq(
   "org.scala-graph" % "graph-core_2.13" % "1.13.5"
+)
+
+lazy val graphLibs = Seq(
+  "org.scala-graph" % "graph-core_2.13" % "2.0.0"
 )
 
 lazy val parallelLibs = Seq(
@@ -31,13 +36,14 @@ lazy val parallelLibs = Seq(
 
 lazy val defaults = Seq(
   scalaVersion := "3.3.1",
-  libraryDependencies ++= zio2Libs ++ linAlgLibs ++ graphLibs ++ parallelLibs,
+  libraryDependencies ++= zio2Libs ++ linAlgLibs  ++ parallelLibs,
   Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 )
 
 lazy val aoc2019 = (project in file("2019"))
   .settings(defaults)
   .settings(
+    libraryDependencies ++= graphLibs,
     moduleName := "2019",
   )
   .dependsOn(util)
@@ -45,12 +51,14 @@ lazy val aoc2019 = (project in file("2019"))
 lazy val aoc2020 = (project in file("2020"))
   .settings(defaults)
   .settings(
+    libraryDependencies ++= graphLibs,
     moduleName   := "2020",
   ).dependsOn(util)
 
 lazy val aoc2021 = (project in file("2021"))
   .settings(defaults)
   .settings(
+    libraryDependencies ++= oldGraphLibs,
     moduleName := "2021"
   )
   .dependsOn(util)
@@ -58,6 +66,7 @@ lazy val aoc2021 = (project in file("2021"))
 lazy val aoc2022 = (project in file("2022"))
   .settings(defaults)
   .settings(
+    libraryDependencies ++= oldGraphLibs,
     moduleName := "2022"
   )
   .dependsOn(util)
@@ -65,6 +74,7 @@ lazy val aoc2022 = (project in file("2022"))
 lazy val aoc2023 = (project in file("2023"))
   .settings(defaults)
   .settings(
+    libraryDependencies ++= graphLibs,
     moduleName := "2023",
   )
   .dependsOn(util)

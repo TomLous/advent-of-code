@@ -1,14 +1,15 @@
-package aoc2019.day5
+package aoc2019.day9
 
+import scala.io.Source
+import scala.annotation.tailrec
 import aoc2019.intcode.IntCode
 import aoc2019.intcode.IntCode.*
 
-import scala.io.Source
 
-
-object Day5 extends App:
+object Day9 extends App:
   private def readSource(inputFile: String) = Source.fromResource(getClass.getPackageName.replace('.','/') + s"/$inputFile.txt")
   private def readLines(inputFile: String) = readSource(inputFile).getLines()
+
 
   private def checkExample(inputFile: String, f:String=>Long ):Unit =
     val solution = f(inputFile)
@@ -20,14 +21,18 @@ object Day5 extends App:
     assert(solution == target, s"$solution != $target -- Part $part failed!")
 
 
+  private def parse(lines: Iterator[String]) = lines.map{
+    case s"$line" => line
+  }.toList
+
+
   private def solvePart1(inputFile: String):Long =
     val program = read(readSource(inputFile))
-    execute(Input(program, List(1))).sig.dropWhile(_ == 0).head
+    execute(Input(program, List(1))).sig.head
 
   private def solvePart2(inputFile: String):Long =
     val program = read(readSource(inputFile))
-    execute(Input(program, List(5))).sig.head
-
+    execute(Input(program, List(2))).sig.head
 
   private lazy val part1Solution = solvePart1("input")
   private lazy val part2Solution = solvePart2("input")

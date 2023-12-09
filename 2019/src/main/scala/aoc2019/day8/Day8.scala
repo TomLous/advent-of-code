@@ -1,14 +1,11 @@
-package aoc2019.day5
-
-import aoc2019.intcode.IntCode
-import aoc2019.intcode.IntCode.*
+package aoc2019.day8
 
 import scala.io.Source
+import scala.annotation.tailrec
 
 
-object Day5 extends App:
-  private def readSource(inputFile: String) = Source.fromResource(getClass.getPackageName.replace('.','/') + s"/$inputFile.txt")
-  private def readLines(inputFile: String) = readSource(inputFile).getLines()
+object Day8 extends App:
+  private def readLines(inputFile: String) = Source.fromResource(getClass.getPackageName.replace('.','/') + s"/$inputFile.txt").getLines()
 
   private def checkExample(inputFile: String, f:String=>Long ):Unit =
     val solution = f(inputFile)
@@ -20,13 +17,24 @@ object Day5 extends App:
     assert(solution == target, s"$solution != $target -- Part $part failed!")
 
 
+  private def parse(lines: Iterator[String]) = lines.flatMap(_.toCharArray).map(_.asDigit).grouped(25*6).toList
+
+
+
+
   private def solvePart1(inputFile: String):Long =
-    val program = read(readSource(inputFile))
-    execute(Input(program, List(1))).sig.dropWhile(_ == 0).head
+    val layers = parse(readLines(inputFile))
+    val zeroLayer = layers.map(layer => (layer, layer.count(_ == 0))).minBy(_._2)._1
+    zeroLayer.count(_ == 1) * zeroLayer.count(_ == 2)
 
   private def solvePart2(inputFile: String):Long =
-    val program = read(readSource(inputFile))
-    execute(Input(program, List(5))).sig.head
+    val layers = parse(readLines(inputFile))
+
+    val finalLayer = layers.foldLeft(layers.head)((sumLayer, layer) =>
+        sumLayer.zip(layer).map{ case (a,b) => if a == 2 then b else a }
+    )
+    finalLayer.grouped(25).foreach(row => println(row.map{ case 0 => " " case 1 => "█" }.mkString)) // ·
+    0L
 
 
   private lazy val part1Solution = solvePart1("input")

@@ -1,10 +1,11 @@
+//> using scala 3.3.1
 //> using lib "com.lihaoyi::os-lib:0.9.2"
 //> using lib "com.lihaoyi::requests:0.8.0"
 //> using lib "com.github.tkqubo:html-to-markdown:0.8.3"
 import os.Path
 import com.github.tkqubo.html2md.Html2Markdown
 
-
+import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
 object Templater {
@@ -111,32 +112,32 @@ object Templater {
 //              .replaceAll("""(?si)<p class="day-success">.*""", "")
 
 
-            Try{
-              """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-                os.write.over(
-                  resourceBase / targetFolder / s"example-part${i+1}.txt",
-                  m.group(1)
-                )
-                os.write.over(
-                  resourceBase / targetFolder / s"example-part${i+1}-target.txt",
-                  m.group(3)
-                )
-              }
-            }
 
-            Try{
-              """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
-                os.write.over(
-                  resourceBase / targetFolder / s"result-part${i+1}.txt",
-                  m.group(1)
-                )
-              }
+            """(?si)<pre><code>(.*?)</code></pre>(.*?<code><em>(\d+)</em></code>)?""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+              Try{os.write(
+                resourceBase / targetFolder / s"example-part${i+1}.txt",
+                m.group(1)
+              )}
+              Try{os.write(
+                resourceBase / targetFolder / s"example-part${i+1}-target.txt",
+                m.group(3)
+              )}
             }
 
 
 
+            """(?si)Your puzzle answer was <code>(\d+)</code>""".r.findAllIn(response.text()).matchData.zipWithIndex.foreach { (m, i) =>
+              Try{os.write(
+                resourceBase / targetFolder / s"result-part${i+1}.txt",
+                m.group(1)
+              )}
+            }
 
-            val readmeContent =  os.read(readmeFile).replaceAll("""(?si)## Description(.*)##""", "## Description\n\n" + markdown + "\n##")
+
+            val safemd = Regex.quote(markdown).replaceAll("""\$""", """\\\$""")
+
+
+            val readmeContent =  os.read(readmeFile).replaceAll("""(?si)## Description(.*)##""", "## Description\n\n" + safemd  + "\n##")
 
             os.write.over(
               readmeFile,
